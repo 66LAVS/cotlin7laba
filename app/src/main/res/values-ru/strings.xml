@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Супер тачки</string>
+    <string name="About" >Овчиев Рамиль 3302 67</string>
+    <string name="add_lang">Добавить машину</string>
+    <string name="ok">ОК</string>
+    <string name="drawing">Рисование</string>
+    <string name="change_picture">Сменить картинку</string>
+    <string name="delete_car">Удалить машину</string>
+    <string name="name_label">Название</string>
+    <string name="year_label">Год</string>
+    <string name="engine_label">Двигатель</string>
+    <string name="number_label">Номер</string>
+    <string name="add_button">Добавить</string>
+    <string name="rect">Прямоугольник</string>
+    <string name="circle">Круг</string>
+    <string name="image">Изображение</string>
+    <string name="from_saved">Из сохраненного</string>
+    <string name="from_create">Из создания</string>
+    <string name="item_selected">элемент = %s</string>
+    <string name="db_empty">БД пуста</string>
+    <string name="db_has_records">БД содержит записи</string>
+    <string name="saved">сохранено</string>
+
+    <string name="Priora">Лада Приора: 1.6 л, 98 л.с.</string>
+    <string name="Ford">Ford Focus: 2.0 л, 150 л.с.</string>
+    <string name="BMW">BMW X5: 3.0 л, 249 л.с.</string>
+    <string name="Audi">Audi A6: 2.0 л, 190 л.с.</string>
+    <string name="Honda">Honda Civic: 1.8 л, 140 л.с.</string>
+    <string name="Mercedes">Mercedes-Benz E-Class: 3.5 л, 272 л.с.</string>
+    <string name="Hyundai">Hyundai Solaris: 2.4 л, 150 л.с.</string>
+    <string name="Kia">Kia Rio: 1.6 л, 123 л.с.</string>
+    <string name="Lada">Lada Vesta: 1.6 л, 106 л.с.</string>
+</resources>
