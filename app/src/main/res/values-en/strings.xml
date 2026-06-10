@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Super Cars</string>
-    <string name="About" >Овчиев Рамиль 3302 52</string>
+    <string name="About">Ovchiev Ramil 3302 52</string>
     <string name="add_lang">Add car</string>
     <string name="ok">OK</string>
     <string name="drawing">Drawing</string>
@@ -15,6 +15,13 @@
     <string name="rect">Rect</string>
     <string name="circle">Circle</string>
     <string name="image">Image</string>
+    <string name="romb">Rhombus</string>
+    <string name="surname">Name</string>
+    <string name="red">Red</string>
+    <string name="green">Green</string>
+    <string name="blue">Blue</string>
+    <string name="sterka">Eraser</string>
+    <string name="clear_all">Clear all</string>
     <string name="from_saved">From saved</string>
     <string name="from_create">From create</string>
     <string name="item_selected">item = %s</string>
@@ -22,6 +29,7 @@
     <string name="db_has_records">DB has records</string>
     <string name="saved">saved1</string>
     <string name="about">About</string>
+    <string name="save">Save</string>
     <string name="add_car">Add car</string>
     <string name="Priora">Lada Priora: 1.6 L, 98 hp</string>
     <string name="Ford">Ford Focus: 2.0 L, 150 hp</string>
@@ -32,4 +40,5 @@
     <string name="Hyundai">Hyundai Solaris: 2.4 L, 150 hp</string>
     <string name="Kia">Kia Rio: 1.6 L, 123 hp</string>
     <string name="Lada">Lada Vesta: 1.6 L, 106 hp</string>
+    <string name="yellow">Yellow</string>
 </resources>

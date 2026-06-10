@@ -37,7 +37,7 @@ import com.example.laba4.ItemViewModel
 import com.example.laba4.ui.theme.Laba4Theme
 import kotlinx.coroutines.launch
 
-
+//cоздаем интерфейс
 class InputActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -144,9 +144,11 @@ class InputActivity : ComponentActivity() {
                     onClick = {
                         println("added $langName $langYear $liter $number")
                         val intent = Intent()
+                        //создаем новый язык с введенными параметрами
                         val newLang = Car(langName, langYear,liter,number)
 
                         intent.putExtra("newItem", newLang)
+                        //вставляем намерение в результат текущего окна
                         setResult(RESULT_OK, intent);
                         langName = ""
                         langYear = 0

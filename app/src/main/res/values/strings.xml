@@ -14,7 +14,14 @@
     <string name="add_button">Add</string>
     <string name="rect">Rect</string>
     <string name="circle">Circle</string>
+    <string name="save">Save</string>
     <string name="image">Image</string>
+    <string name="romb">Ромб</string>
+    <string name="surname">Имя</string>
+    <string name="red">Красный</string>
+    <string name="green">Зеленый</string>
+    <string name="blue">Синий</string>
+    <string name="sterka">Ластик</string>
     <string name="from_saved">From saved</string>
     <string name="from_create">From create</string>
     <string name="item_selected">item = %s</string>

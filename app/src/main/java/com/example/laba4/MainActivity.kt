@@ -1,5 +1,6 @@
 package com.example.laba4
 
+
 import android.Manifest
 import android.app.Activity
 import android.content.ContentValues
@@ -10,9 +11,19 @@ import android.content.res.Resources
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+
+import android.graphics.Paint
+import android.graphics.Path
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
+import android.view.MotionEvent
+import androidx.compose.ui.graphics.Color
+import android.view.View
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -75,17 +86,19 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
@@ -94,6 +107,9 @@ import com.example.laba4.ui.theme.Laba4Theme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.io.Serializable
 
 
@@ -166,6 +182,7 @@ class MainActivity : ComponentActivity() {
             }
             Toast.makeText(this, "From saved", Toast.LENGTH_SHORT).show()
         } else {
+            // Первый запуск или после полного закрытия
             Toast.makeText(this, "From create", Toast.LENGTH_SHORT).show()
             if (dbHelper!!.isEmpty()) {  //если БД пустая
                 println("DB is emty")
@@ -194,13 +211,10 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column(Modifier.fillMaxSize()) {
                         Column(Modifier.fillMaxSize()) {
+                            //Тут мы заполняем экран
                             MakeAppBar(
                                 viewModel, lazyListState, dbHelper!!
-                            ) //только этот вызов оставляем
-//                        MakeInputPart(
-//                            viewModel, lazyListState
-//                        )//вызываем ф-ию для создания полей ввода данных
-//                        MakeList(viewModel, lazyListState, dbHelper!!)
+                            )
                         }
                     }
                 }
@@ -354,7 +368,7 @@ class MainActivity : ComponentActivity() {
                     val newLang = result.data?.getSerializableExtra("newItem") as Car
                     println("new lang name = ${newLang.name}") //вывод для отладки
                     model.addLangToHead(newLang)
-                    dbHelper.addLang(newLang) //добавляем новый язык в БД
+                    dbHelper.addLang(newLang) //добавляем новый язык в БД ТУТ после inputa
                     scope.launch {  //прокручиваем список, чтобы был виден добавленный элемент
                         lazyListState.scrollToItem(0)
                     }
@@ -447,6 +461,20 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
+    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: LangsDbHelper) {
+        val langListState = viewModel.langListFlow.collectAsState()
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.fillMaxSize().background(Color.White),
+            state = lazyListState
+        ) {
+            items(items = viewModel.langListFlow.value, key = { it.name }) { item ->
+                ListRow(item, langListState.value, viewModel, dbHelper)
+            }
+        }
+    }
+
+    @Composable
     fun MakeAlertDialog(context: Context, dialogTitle: String, openDialog: MutableState<Boolean>) {
 //создаем переменную, в ней будет сохраняться текст, полученный из строковых ресурсов для выбранного языка
         var strValue = remember { mutableStateOf("") } //для получения значения строки из ресурсов
@@ -476,11 +504,15 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
         var langSelected = remember { mutableStateOf("") }
-        if (openDialog.value) MakeAlertDialog(context, langSelected.value, openDialog) //ПОЯВЛЯЕТСЯ ДИАЛОГ
+        if (openDialog.value) MakeAlertDialog(
+            context,
+            langSelected.value,
+            openDialog
+        ) //ПОЯВЛЯЕТСЯ ДИАЛОГ
         var mDisplayMenu by remember { mutableStateOf(false) }
         val launcher =
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-                if (res.data?.data != null) {
+                if (res.data?.data != null) { //если действительно выбран файд!!
                     println("image uri = ${res.data?.data}")
                     val imgURI = res.data?.data!!
 
@@ -516,42 +548,42 @@ class MainActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                    Column  (){
-                        Text(
-                            text = model.name,
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(start = 18.dp),
-                            color = Color.Black
-                        )
-                        Text(
-                            text = model.year.toString(),
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(10.dp),
-                            fontStyle = FontStyle.Italic,
-                            color = Color.Black
+                Column() {
+                    Text(
+                        text = model.name,
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(start = 18.dp),
+                        color = Color.Black
+                    )
+                    Text(
+                        text = model.year.toString(),
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(10.dp),
+                        fontStyle = FontStyle.Italic,
+                        color = Color.Black
 
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = model.liter.toString() + "Л",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(10.dp),
-                            fontStyle = FontStyle.Italic,
-                            color = Color.Black
+                    )
+                }
+                Column {
+                    Text(
+                        text = model.liter.toString() + "Л",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(10.dp),
+                        fontStyle = FontStyle.Italic,
+                        color = Color.Black
 
-                        )
-                        Text(
-                            text = model.number.toString(),
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(10.dp),
-                            fontStyle = FontStyle.Italic,
-                            color = Color.Black
+                    )
+                    Text(
+                        text = model.number.toString(),
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(10.dp),
+                        fontStyle = FontStyle.Italic,
+                        color = Color.Black
 
-                        )
-                    }
+                    )
+                }
 
 
                 DropdownMenu(
@@ -596,14 +628,15 @@ class MainActivity : ComponentActivity() {
                     }
 
                     )
-                }}
-                Image(
-                    painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
-                    else rememberImagePainter(model.picture),
-                    contentDescription = "",
-                    contentScale = ContentScale.Crop, //КАРТИКНИ ОДНОГО РАЗМЕРА
-                    modifier = Modifier.size(75.dp)
-                )
+                }
+            }
+            Image(
+                painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
+                else rememberImagePainter(model.picture),
+                contentDescription = "",
+                contentScale = ContentScale.Crop, //КАРТИКНИ ОДНОГО РАЗМЕРА
+                modifier = Modifier.size(75.dp)
+            )
 
         }
     }
@@ -724,118 +757,6 @@ class MainActivity : ComponentActivity() {
                 }, modifier = Modifier.weight(3f)
             ) {
                 Text("Add")
-            }
-        }
-    }
-
-    class DrawingActivity : ComponentActivity() {
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            setContent {
-                val drawingObjects = remember { mutableStateListOf("") } //список для рисования
-                val buttonNames = arrayOf("Rect", "Circle", "Image") //массив с названиями кнопок
-                Laba4Theme {
-                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//код для получения разрешения для доступа к файлам с изображениями
-//может понадобиться import android.Manifest
-//в файл манифеста нужно добавить
-//<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-                        val context = LocalContext.current
-                        val permission: String = Manifest.permission.READ_MEDIA_IMAGES
-                        val grant = ContextCompat.checkSelfPermission(context, permission)
-                        if (grant != PackageManager.PERMISSION_GRANTED) {
-                            val permission_list = arrayOfNulls<String>(1)
-                            permission_list[0] = permission
-                            ActivityCompat.requestPermissions(
-                                context as Activity, permission_list, 1
-                            )
-                        }
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                        ) { //колонка с интерфейсом
-//вызываем метод для создания кнопок, ему передаем названия кнопок и список для рисования,
-//в который при нажатии на кнопки записываются данные
-                            MakeTopButtons(buttonNames, drawingObjects)
-                            Canvas(modifier = Modifier.fillMaxSize()) { //сам канвас, на котором рисуем
-                                val canvasQuadrantSize = size / 2F //делим размер канваса на 2
-                                val canvasWidth = size.width //получаем ширину канваса
-                                drawingObjects.forEach { //проходим по элементам списка для рисования
-                                    if (it.contains("Rect")) //если это прямоугольник
-                                        drawRect( //то рисуем его
-                                            color = Color.Magenta, //цвет рисования
-                                            size = canvasQuadrantSize //размер
-                                        )
-                                    if (it.contains("Circle")) //если это круг
-                                        drawCircle( //то рисуем его
-                                            Color.Red, //цвет рисования
-                                            radius = canvasWidth / 4f //и радиус
-                                        )
-                                    if (it.contains("Image")) { //если это изображение
-                                        val mBitmapFromSdcard = //то считываем с сд карты файл
-                                            BitmapFactory.decodeFile("/mnt/sdcard/face.png")
-                                                .asImageBitmap()
-
-//или "/sdcard/face.png" на некоторых устройствах
-                                        drawImage(
-                                            //и выводим его на канвас
-                                            image = mBitmapFromSdcard,
-                                            topLeft = Offset(x = 0f, y = 0f),
-
-
-                                            //координаты верхнего
-                                        ) //левого угла для картинки
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    @Composable
-    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: LangsDbHelper) {
-        val langListState = viewModel.langListFlow.collectAsState()
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White),
-            state = lazyListState
-        ) {
-            items(
-                items = viewModel.langListFlow.value,
-                key = { lang -> lang.name },
-                itemContent = { item ->
-                    ListRow(
-                        item, langListState.value, viewModel, dbHelper
-                    ) //добавляем параметр dbHelper
-                })
-        }
-    }
-}
-
-@Composable //метод для создания кнопок
-fun MakeTopButtons(buttonNames: Array<String>, drawingObjects: SnapshotStateList<String>) {
-    Row( //ряд для создания кнопок
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .border(BorderStroke(2.dp, Color.Blue))
-    ) {
-        buttonNames.forEach { //цикл по названиям кнопок
-            Button(onClick = { //создаем кнопку и описываем обработчик нажатия на нее
-//удаляем из списка для рисования объект с названием кнопки, если он там был
-                drawingObjects.remove(it)
-                drawingObjects.add(it) //и снова добавляем, это нужно для правильного
-            }) { //расположения объектов на холсте, в порядке нажатия
-                Text(text = it) //текст кнопки
             }
         }
     }

@@ -15,6 +15,15 @@
     <string name="rect">Прямоугольник</string>
     <string name="circle">Круг</string>
     <string name="image">Изображение</string>
+    <string name="romb">Ромб</string>
+    <string name="surname">Имя</string>
+    <string name="red">Красный</string>
+    <string name="green">Зеленый</string>
+    <string name="blue">Синий</string>
+    <string name="yellow">Желтый</string>
+    <string name="sterka">Ластик</string>
+    <string name="clear_all">Очистить всё</string>
+    <string name="save">Сохранить</string>
     <string name="from_saved">Из сохраненного</string>
     <string name="from_create">Из создания</string>
     <string name="item_selected">элемент = %s</string>
