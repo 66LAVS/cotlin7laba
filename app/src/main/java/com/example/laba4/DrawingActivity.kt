@@ -2,6 +2,7 @@ package com.example.laba4
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -14,6 +15,8 @@ import android.graphics.Path
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -79,7 +82,7 @@ class DrawingActivity : ComponentActivity() {
                 stringResource(R.string.save)
             )
 
-            val myView: MyGraphView = MyGraphView(applicationContext)
+            val myView: MyGraphView = MyGraphView(applicationContext, this)
             val strokeWidth = remember { mutableStateOf(12f) }
 
             Laba4Theme {
@@ -176,7 +179,7 @@ fun MakeTopButtons(buttonNames: Array<String>, funcArray: Array<KFunction0<Unit>
     }
 }
 
-class MyGraphView(context: Context?) : View(context) {
+class MyGraphView(context: Context?, private val activity: Activity) : View(context) {
     private lateinit var path: Path
     private var mPaint: Paint = Paint()
     private var mBitmapPaint: Paint = Paint(Paint.DITHER_FLAG)
@@ -353,17 +356,41 @@ class MyGraphView(context: Context?) : View(context) {
     }
 
     fun onSaveClick() {
-        try {
-            val destPath: String = context.getExternalFilesDir(null)!!.absolutePath
-            val file = File(destPath, "myDrawing.PNG")
-            val outStream = FileOutputStream(file)
-            mBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, outStream)
-            outStream.flush()
-            outStream.close()
-            Toast.makeText(context, "Сохранено в: ${file.absolutePath}", Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(context, "Ошибка сохранения: ${e.message}", Toast.LENGTH_SHORT).show()
+        val builder = AlertDialog.Builder(activity)
+        builder.setTitle("Сохранить файл")
+        builder.setMessage("Введите имя файла:")
+
+        val input = EditText(activity)
+        input.setText("myDrawing")
+        builder.setView(input)
+
+        builder.setPositiveButton("Сохранить") { _, _ ->
+            val fileName = input.text.toString().trim()
+            if (fileName.isEmpty()) {
+                Toast.makeText(activity, "Имя файла не может быть пустым", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+
+            try {
+                val destPath: String = context.getExternalFilesDir(null)!!.absolutePath
+                val file = File(destPath, "$fileName.PNG")
+                val outStream = FileOutputStream(file)
+                mBitmap!!.compress(Bitmap.CompressFormat.PNG, 100, outStream)
+                outStream.flush()
+                outStream.close()
+                Toast.makeText(activity, "Сохранено в: ${file.absolutePath}", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(activity, "Ошибка сохранения: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
+
+        builder.setNegativeButton("Отмена") { dialog, _ ->
+            dialog.cancel()
+        }
+
+        val dialog = builder.create()
+        dialog.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+        dialog.show()
     }
 
     // Массивы функций для каждого ряда кнопок
