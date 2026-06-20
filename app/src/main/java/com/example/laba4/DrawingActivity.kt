@@ -343,7 +343,7 @@ class MyGraphView(context: Context?, private val activity: Activity) : View(cont
 
     fun drawFace() {
         val destPath: String = context.getExternalFilesDir(null)!!.absolutePath
-        val mBitmapFromSdcard = BitmapFactory.decodeFile(destPath + "/face.png")
+        val mBitmapFromSdcard = BitmapFactory.decodeFile(destPath + "/images.jpeg")
         if (mBitmapFromSdcard != null) {
             val scaledBitmap = Bitmap.createScaledBitmap(
                 mBitmapFromSdcard, 150, 150, true)
