@@ -109,7 +109,6 @@ class DrawingActivity : ComponentActivity() {
                         Spacer(modifier = Modifier.height(8.dp))
                         MakeTopButtons(buttonNamesRow4, myView.funcArrayRow4, myView)
                         Spacer(modifier = Modifier.height(8.dp))
-
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
