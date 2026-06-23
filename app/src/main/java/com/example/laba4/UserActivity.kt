@@ -33,7 +33,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -64,38 +63,22 @@ import kotlinx.coroutines.flow.StateFlow
 import java.io.Serializable
 import java.util.UUID
 
-// Data class for Medicines (same as before)
-data class MedicineUser(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val price: Double,
-    val quantity: Int,
-    val manufacturer: String,
-    var picture: String = R.drawable.no_picture.toString()
-) : Serializable
+// НЕ ОБЪЯВЛЯЕМ КЛАСС Medicine ЗДЕСЬ!
+// Он уже есть в AdminActivity, и мы будем его использовать
 
 class UserViewModel : ViewModel() {
 
-    private var medicineList = mutableStateListOf(
-        MedicineUser(name = "Paracetamol", price = 150.0, quantity = 50, manufacturer = "PharmaCo", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Aspirin", price = 200.0, quantity = 30, manufacturer = "MedLife", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Ibuprofen", price = 250.0, quantity = 40, manufacturer = "HealthPlus", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Amoxicillin", price = 350.0, quantity = 20, manufacturer = "BioMed", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Omeprazole", price = 180.0, quantity = 60, manufacturer = "GastroCare", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Loratadine", price = 120.0, quantity = 45, manufacturer = "AllergyRelief", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Metformin", price = 280.0, quantity = 35, manufacturer = "DiabetesCare", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Atorvastatin", price = 400.0, quantity = 25, manufacturer = "HeartHealth", picture = R.drawable.no_picture.toString()),
-        MedicineUser(name = "Vitamin D", price = 90.0, quantity = 100, manufacturer = "NutriLife", picture = R.drawable.no_picture.toString())
-    )
+    // Используем класс Medicine из AdminActivity
+    private var medicineList = mutableStateListOf<Medicine>()
 
     private val _medicineListFlow = MutableStateFlow(medicineList)
-    val medicineListFlow: StateFlow<List<MedicineUser>> get() = _medicineListFlow
+    val medicineListFlow: StateFlow<List<Medicine>> get() = _medicineListFlow
 
     fun clearList() {
         medicineList.clear()
     }
 
-    fun addMedicineToEnd(medicine: MedicineUser) {
+    fun addMedicineToEnd(medicine: Medicine) {
         medicineList.add(medicine)
     }
 }
@@ -107,10 +90,11 @@ class UserActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dbHelper = UserMedicinesDbHelper(this)
+        // Используем ТУ ЖЕ САМУЮ базу данных, что и AdminActivity
+        val dbHelper = MedicinesDbHelper(this)
 
         if (savedInstanceState != null && savedInstanceState.containsKey("medicines")) {
-            val tempMedicineArray = savedInstanceState.getSerializable("medicines") as ArrayList<MedicineUser>
+            val tempMedicineArray = savedInstanceState.getSerializable("medicines") as ArrayList<Medicine>
             viewModel.clearList()
             tempMedicineArray.forEach {
                 viewModel.addMedicineToEnd(it)
@@ -120,11 +104,22 @@ class UserActivity : ComponentActivity() {
             Toast.makeText(this, "Loading medicines...", Toast.LENGTH_SHORT).show()
             if (dbHelper.isEmpty()) {
                 println("DB is empty")
-                var tempMedicineArray = ArrayList<MedicineUser>()
-                viewModel.medicineListFlow.value.forEach {
-                    tempMedicineArray.add(it)
+                // Добавляем начальные данные
+                val defaultMedicines = listOf(
+                    Medicine(name = "Paracetamol", price = 150.0, quantity = 50, manufacturer = "PharmaCo"),
+                    Medicine(name = "Aspirin", price = 200.0, quantity = 30, manufacturer = "MedLife"),
+                    Medicine(name = "Ibuprofen", price = 250.0, quantity = 40, manufacturer = "HealthPlus"),
+                    Medicine(name = "Amoxicillin", price = 350.0, quantity = 20, manufacturer = "BioMed"),
+                    Medicine(name = "Omeprazole", price = 180.0, quantity = 60, manufacturer = "GastroCare"),
+                    Medicine(name = "Loratadine", price = 120.0, quantity = 45, manufacturer = "AllergyRelief"),
+                    Medicine(name = "Metformin", price = 280.0, quantity = 35, manufacturer = "DiabetesCare"),
+                    Medicine(name = "Atorvastatin", price = 400.0, quantity = 25, manufacturer = "HeartHealth"),
+                    Medicine(name = "Vitamin D", price = 90.0, quantity = 100, manufacturer = "NutriLife")
+                )
+                defaultMedicines.forEach {
+                    viewModel.addMedicineToEnd(it)
+                    dbHelper.addMedicine(it)
                 }
-                dbHelper.addArrayToDB(tempMedicineArray)
                 dbHelper.printDB()
             } else {
                 println("DB has records")
@@ -153,7 +148,7 @@ class UserActivity : ComponentActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        var tempMedicineArray = ArrayList<MedicineUser>()
+        var tempMedicineArray = ArrayList<Medicine>()
         viewModel.medicineListFlow.value.forEach {
             tempMedicineArray.add(it)
         }
@@ -161,10 +156,11 @@ class UserActivity : ComponentActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    class UserMedicinesDbHelper(context: Context) :
+    // Класс для работы с базой данных - ТОТ ЖЕ, что и в AdminActivity
+    class MedicinesDbHelper(context: Context) :
         SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
         companion object {
-            private val DATABASE_NAME = "MEDICINES_USER"
+            private val DATABASE_NAME = "MEDICINES"
             private val DATABASE_VERSION = 1
             val TABLE_NAME = "medicines_table"
             val ID_COL = "id"
@@ -214,13 +210,13 @@ class UserActivity : ComponentActivity() {
             } else println("DB is empty")
         }
 
-        fun addArrayToDB(medicines: ArrayList<MedicineUser>) {
+        fun addArrayToDB(medicines: ArrayList<Medicine>) {
             medicines.forEach {
                 addMedicine(it)
             }
         }
 
-        fun addMedicine(medicine: MedicineUser) {
+        fun addMedicine(medicine: Medicine) {
             val values = ContentValues()
             values.put(ID_COL, medicine.id)
             values.put(NAME_COL, medicine.name)
@@ -234,8 +230,8 @@ class UserActivity : ComponentActivity() {
             db.close()
         }
 
-        fun getMedicinesArray(): ArrayList<MedicineUser> {
-            var medicinesArray = ArrayList<MedicineUser>()
+        fun getMedicinesArray(): ArrayList<Medicine> {
+            var medicinesArray = ArrayList<Medicine>()
             val cursor = getCursor()
             if (!isEmpty()) {
                 cursor.moveToFirst()
@@ -253,7 +249,7 @@ class UserActivity : ComponentActivity() {
                     val quantity = cursor.getInt(quantityColIndex)
                     val manufacturer = cursor.getString(manufacturerColIndex)
                     val picture = cursor.getString(pictureColIndex)
-                    medicinesArray.add(MedicineUser(id, name, price, quantity, manufacturer, picture))
+                    medicinesArray.add(Medicine(id, name, price, quantity, manufacturer, picture))
                 } while (cursor.moveToNext())
             } else println("DB is empty")
             return medicinesArray
@@ -262,33 +258,27 @@ class UserActivity : ComponentActivity() {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: UserMedicinesDbHelper) {
+    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
         val mContext = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
 
         if (openDialog.value)
             MakeUserAlertDialog(context = mContext, dialogTitle = "Medicine Details", openDialog = openDialog)
 
-        // User-friendly TopAppBar with logout button
         TopAppBar(
             title = { Text("Medicines Catalog") },
             actions = {
-                // Кнопка выхода
                 Button(
                     onClick = {
-                        // Очищаем SharedPreferences
                         val prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit().clear().apply()
 
-                        // Показываем сообщение
                         Toast.makeText(mContext, "Logged out successfully", Toast.LENGTH_SHORT).show()
 
-                        // Переходим на экран логина
                         val intent = Intent(mContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         mContext.startActivity(intent)
 
-                        // Закрываем текущую активность
                         (mContext as? android.app.Activity)?.finish()
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -302,7 +292,6 @@ class UserActivity : ComponentActivity() {
             }
         )
 
-        // Content
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -314,7 +303,7 @@ class UserActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: UserMedicinesDbHelper) {
+    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
         val medicineListState = viewModel.medicineListFlow.collectAsState()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -351,10 +340,10 @@ class UserActivity : ComponentActivity() {
 
     @Composable
     fun UserListRow(
-        model: MedicineUser,
-        medicineListState: List<MedicineUser>,
+        model: Medicine,
+        medicineListState: List<Medicine>,
         viewModel: UserViewModel,
-        dbHelper: UserMedicinesDbHelper
+        dbHelper: MedicinesDbHelper
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
@@ -368,7 +357,7 @@ class UserActivity : ComponentActivity() {
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()
-                .border(BorderStroke(2.dp, Color.Blue)) // Blue border for user view
+                .border(BorderStroke(2.dp, Color.Blue))
                 .padding(8.dp)
                 .combinedClickable(
                     onClick = {
@@ -378,7 +367,6 @@ class UserActivity : ComponentActivity() {
                         openDialog.value = true
                     },
                     onLongClick = {
-                        // No action on long click - view only
                         Toast.makeText(context, "View only mode", Toast.LENGTH_SHORT).show()
                     }
                 )
@@ -421,13 +409,24 @@ class UserActivity : ComponentActivity() {
                     )
                 }
             }
-            Image(
-                painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
-                else rememberImagePainter(model.picture),
-                contentDescription = "",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(75.dp)
-            )
+            // Отображаем картинку если она есть
+            if (model.picture.isNotEmpty() && model.picture != "no_picture") {
+                Image(
+                    painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
+                    else rememberImagePainter(model.picture),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(75.dp)
+                )
+            } else {
+                // Заглушка если нет картинки
+                Image(
+                    painter = painterResource(android.R.drawable.ic_menu_gallery),
+                    contentDescription = "No image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(75.dp)
+                )
+            }
         }
     }
 

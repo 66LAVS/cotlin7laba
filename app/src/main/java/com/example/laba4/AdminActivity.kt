@@ -81,7 +81,7 @@ import java.util.UUID
 
 // Data class for Medicines
 data class Medicine(
-    val id: String = UUID.randomUUID().toString(), // Unique ID for each item
+    val id: String = UUID.randomUUID().toString(),
     val name: String,
     val price: Double,
     val quantity: Int,
@@ -325,26 +325,10 @@ class AdminActivity : ComponentActivity() {
         if (openDialog.value)
             MakeAlertDialog(context = mContext, dialogTitle = "About", openDialog = openDialog)
 
-        // TopAppBar with Back button and Dropdown menu
+        // TopAppBar без navigationIcon (стрелочки назад)
         TopAppBar(
             title = { Text("Medicines App") },
-            navigationIcon = {
-                // Back button to return to MainActivity
-                IconButton(
-                    onClick = {
-                        Toast.makeText(mContext, "Returning to Login", Toast.LENGTH_SHORT).show()
-                        // Clear admin session and go back to login
-                        val prefs = mContext.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
-                        prefs.edit().clear().apply()
-
-                        val intent = Intent(mContext, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        mContext.startActivity(intent)
-                    }
-                ) {
-                    Text("←") // Back arrow
-                }
-            },
+            // navigationIcon удален
             actions = {
                 IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
                     Text("☰")

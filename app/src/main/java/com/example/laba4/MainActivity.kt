@@ -69,11 +69,9 @@ class MainActivity : ComponentActivity() {
         if (username != null && password != null && username.isNotEmpty() && password.isNotEmpty()) {
             if (isAdmin) {
                 startActivity(Intent(this, AdminActivity::class.java))
-                // НЕ закрываем MainActivity
                 return
             } else {
                 startActivity(Intent(this, UserActivity::class.java))
-                // НЕ закрываем MainActivity
                 return
             }
         }
@@ -93,7 +91,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // При возврате из UserActivity обновляем состояние
-        // Очищаем сохраненные данные если нужно
     }
 
     @Composable
@@ -199,37 +196,78 @@ class MainActivity : ComponentActivity() {
 
                         val intent = Intent(context, UserActivity::class.java)
                         context.startActivity(intent)
-                        // НЕ закрываем MainActivity
 
                     } else {
-                        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                        val savedUsername = prefs.getString(KEY_USERNAME, "")
-                        val savedPassword = prefs.getString(KEY_PASSWORD, "")
-                        val isAdmin = prefs.getBoolean(KEY_IS_ADMIN, false)
+                        // Логин - проверяем в базе данных
+                        val dbHelper = UsersDbHelper(context)
 
+                        // Проверяем админа (хардкод)
                         if (username == "admin123" && password == "admin123") {
                             Toast.makeText(context, "Admin Login Successful!", Toast.LENGTH_SHORT).show()
+                            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                             prefs.edit().apply {
                                 putString(KEY_USERNAME, username)
                                 putString(KEY_PASSWORD, password)
                                 putBoolean(KEY_IS_ADMIN, true)
                                 apply()
                             }
+                            dbHelper.close()
                             val intent = Intent(context, AdminActivity::class.java)
                             context.startActivity(intent)
-                            // НЕ закрываем MainActivity
                             return@Button
                         }
+
+                        // Проверяем обычного пользователя в БД
+                        val cursor = dbHelper.getUser(username)
+                        if (cursor != null && cursor.moveToFirst()) {
+                            val passwordColIndex = cursor.getColumnIndex(UsersDbHelper.PASSWORD_COL)
+                            val isAdminColIndex = cursor.getColumnIndex(UsersDbHelper.IS_ADMIN_COL)
+
+                            if (passwordColIndex >= 0 && isAdminColIndex >= 0) {
+                                val dbPassword = cursor.getString(passwordColIndex)
+                                val isAdmin = cursor.getInt(isAdminColIndex) == 1
+
+                                if (password == dbPassword && !isAdmin) {
+                                    // Успешный вход
+                                    Toast.makeText(context, "User Login Successful!", Toast.LENGTH_SHORT).show()
+                                    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                    prefs.edit().apply {
+                                        putString(KEY_USERNAME, username)
+                                        putString(KEY_PASSWORD, password)
+                                        putBoolean(KEY_IS_ADMIN, false)
+                                        apply()
+                                    }
+                                    cursor.close()
+                                    dbHelper.close()
+                                    val intent = Intent(context, UserActivity::class.java)
+                                    context.startActivity(intent)
+                                    return@Button
+                                } else {
+                                    Toast.makeText(context, "Invalid password!", Toast.LENGTH_SHORT).show()
+                                    cursor.close()
+                                    dbHelper.close()
+                                    return@Button
+                                }
+                            }
+                        }
+
+                        // Если пользователь не найден в БД, проверяем SharedPreferences (для обратной совместимости)
+                        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                        val savedUsername = prefs.getString(KEY_USERNAME, "")
+                        val savedPassword = prefs.getString(KEY_PASSWORD, "")
+                        val isAdmin = prefs.getBoolean(KEY_IS_ADMIN, false)
 
                         if (savedUsername != null && savedPassword != null &&
                             username == savedUsername && password == savedPassword && !isAdmin) {
                             Toast.makeText(context, "User Login Successful!", Toast.LENGTH_SHORT).show()
                             val intent = Intent(context, UserActivity::class.java)
                             context.startActivity(intent)
-                            // НЕ закрываем MainActivity
+                            dbHelper.close()
                             return@Button
                         }
 
+                        cursor?.close()
+                        dbHelper.close()
                         Toast.makeText(context, "Invalid username or password!", Toast.LENGTH_SHORT).show()
                     }
                 },
