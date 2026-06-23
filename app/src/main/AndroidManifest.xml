@@ -15,6 +15,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Laba4">
 
+        <!-- MainActivity - Login Screen -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -26,11 +27,19 @@
             </intent-filter>
         </activity>
 
-
+        <!-- AdminActivity - Full access -->
         <activity
-            android:name=".DrawingActivity"
+            android:name=".AdminActivity"
             android:exported="false"
             android:theme="@style/Theme.Laba4" />
+
+        <!-- UserActivity - View only -->
+        <activity
+            android:name=".UserActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Laba4" />
+
+
 
         <activity
             android:name=".InputActivity"
