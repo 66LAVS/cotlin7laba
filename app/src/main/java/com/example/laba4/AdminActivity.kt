@@ -82,10 +82,10 @@ import java.util.UUID
 // Data class for Medicines
 data class Medicine(
     val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val price: Double,
-    val quantity: Int,
-    val manufacturer: String,
+    var name: String,
+    var price: Double,
+    var quantity: Int,
+    var manufacturer: String,
     var picture: String = R.drawable.no_picture.toString()
 ) : Serializable
 
@@ -112,6 +112,10 @@ class ItemViewModel : ViewModel() {
 
     fun changeImage(index: Int, value: String) {
         medicineList[index] = medicineList[index].copy(picture = value)
+    }
+
+    fun updateMedicine(index: Int, medicine: Medicine) {
+        medicineList[index] = medicine
     }
 
     fun addMedicineToHead(medicine: Medicine) {
@@ -261,6 +265,19 @@ class AdminActivity : ComponentActivity() {
             db.close()
         }
 
+        fun updateMedicine(medicine: Medicine) {
+            val db = this.writableDatabase
+            val values = ContentValues()
+            values.put(NAME_COL, medicine.name)
+            values.put(PRICE_COL, medicine.price)
+            values.put(QUANTITY_COL, medicine.quantity)
+            values.put(MANUFACTURER_COL, medicine.manufacturer)
+            values.put(PICTURE_COL, medicine.picture)
+
+            db.update(TABLE_NAME, values, "$ID_COL = ?", arrayOf(medicine.id))
+            db.close()
+        }
+
         fun deleteMedicine(medicine: Medicine) {
             val db = this.writableDatabase
             db.delete(TABLE_NAME, "$ID_COL = ?", arrayOf(medicine.id))
@@ -325,10 +342,8 @@ class AdminActivity : ComponentActivity() {
         if (openDialog.value)
             MakeAlertDialog(context = mContext, dialogTitle = "About", openDialog = openDialog)
 
-        // TopAppBar без navigationIcon (стрелочки назад)
         TopAppBar(
             title = { Text("Medicines App") },
-            // navigationIcon удален
             actions = {
                 IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
                     Text("☰")
@@ -358,7 +373,6 @@ class AdminActivity : ComponentActivity() {
                         text = { Text(text = "Logout") },
                         onClick = {
                             Toast.makeText(mContext, "Logging out...", Toast.LENGTH_SHORT).show()
-                            // Clear admin session and go back to login
                             val prefs = mContext.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
                             prefs.edit().clear().apply()
 
@@ -371,7 +385,6 @@ class AdminActivity : ComponentActivity() {
             }
         )
 
-        // Content without drawer
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -418,6 +431,96 @@ class AdminActivity : ComponentActivity() {
         )
     }
 
+    @Composable
+    fun EditMedicineDialog(
+        medicine: Medicine,
+        index: Int,
+        viewModel: ItemViewModel,
+        dbHelper: MedicinesDbHelper,
+        context: Context,
+        onDismiss: () -> Unit
+    ) {
+        var name by remember { mutableStateOf(medicine.name) }
+        var price by remember { mutableStateOf(medicine.price.toString()) }
+        var quantity by remember { mutableStateOf(medicine.quantity.toString()) }
+        var manufacturer by remember { mutableStateOf(medicine.manufacturer) }
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Edit Medicine", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    TextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Price") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TextField(
+                        value = quantity,
+                        onValueChange = { quantity = it },
+                        label = { Text("Quantity") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    TextField(
+                        value = manufacturer,
+                        onValueChange = { manufacturer = it },
+                        label = { Text("Manufacturer") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val priceDouble = price.toDoubleOrNull() ?: 0.0
+                        val quantityInt = quantity.toIntOrNull() ?: 0
+
+                        if (name.isNotEmpty() && priceDouble > 0 && quantityInt > 0 && manufacturer.isNotEmpty()) {
+                            val updatedMedicine = medicine.copy(
+                                name = name,
+                                price = priceDouble,
+                                quantity = quantityInt,
+                                manufacturer = manufacturer
+                            )
+                            viewModel.updateMedicine(index, updatedMedicine)
+                            dbHelper.updateMedicine(updatedMedicine)
+                            Toast.makeText(context, "Medicine updated!", Toast.LENGTH_SHORT).show()
+                            onDismiss()
+                        } else {
+                            Toast.makeText(context, "Please fill all fields correctly!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    )
+                ) {
+                    Text("Save", color = Color.White)
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = onDismiss,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color.Gray
+                    )
+                ) {
+                    Text("Cancel", color = Color.White)
+                }
+            }
+        )
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListRow(
@@ -428,9 +531,22 @@ class AdminActivity : ComponentActivity() {
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
+        val openEditDialog = remember { mutableStateOf(false) }
         var medicineSelected = remember { mutableStateOf("") }
+        val index = medicineListState.indexOf(model)
 
         if (openDialog.value) MakeAlertDialog(context, medicineSelected.value, openDialog)
+
+        if (openEditDialog.value) {
+            EditMedicineDialog(
+                medicine = model,
+                index = index,
+                viewModel = viewModel,
+                dbHelper = dbHelper,
+                context = context,
+                onDismiss = { openEditDialog.value = false }
+            )
+        }
 
         var mDisplayMenu by remember { mutableStateOf(false) }
 
@@ -511,6 +627,19 @@ class AdminActivity : ComponentActivity() {
                     expanded = mDisplayMenu,
                     onDismissRequest = { mDisplayMenu = false }
                 ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Edit Medicine",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        },
+                        onClick = {
+                            mDisplayMenu = !mDisplayMenu
+                            openEditDialog.value = true
+                        }
+                    )
                     DropdownMenuItem(
                         text = {
                             Text(
