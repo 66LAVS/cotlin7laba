@@ -101,7 +101,6 @@ class UserActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Используем ту же БД, что и админ
         val dbHelper = DancersDbHelper(this)
 
         loadDancersFromDb(dbHelper)
@@ -123,16 +122,8 @@ class UserActivity : ComponentActivity() {
 
     private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
         if (dbHelper.isEmpty()) {
+            // Только новые танцоры
             val defaultDancers = listOf(
-                DancerUser(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист"),
-                DancerUser(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор"),
-                DancerUser(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель"),
-                DancerUser(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист"),
-                DancerUser(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор"),
-                DancerUser(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор"),
-                DancerUser(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель"),
-                DancerUser(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист"),
-                DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор"),
                 DancerUser(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
                 DancerUser(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
                 DancerUser(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор"),
@@ -155,7 +146,6 @@ class UserActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Обновляем список при возврате на экран
         val dbHelper = DancersDbHelper(this)
         loadDancersFromDb(dbHelper)
     }
@@ -169,7 +159,6 @@ class UserActivity : ComponentActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    // Используем общий класс DbHelper
     class DancersDbHelper(context: Context) :
         SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
         companion object {

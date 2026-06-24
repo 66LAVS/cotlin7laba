@@ -322,7 +322,7 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "👤 Register as a regular user to view dancers\n👑 Admin: admin123 / admin123",
+                            text = "👑 Admin: admin123 / admin123",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )

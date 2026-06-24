@@ -157,16 +157,8 @@ class AdminActivity : ComponentActivity() {
 
     private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
         if (dbHelper.isEmpty()) {
+            // Только новые танцоры
             val defaultDancers = listOf(
-                Dancer(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист"),
-                Dancer(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор"),
-                Dancer(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель"),
-                Dancer(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист"),
-                Dancer(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор"),
-                Dancer(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор"),
-                Dancer(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель"),
-                Dancer(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист"),
-                Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор"),
                 Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
                 Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
                 Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор"),
