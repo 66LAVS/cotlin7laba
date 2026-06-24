@@ -122,7 +122,6 @@ class UserActivity : ComponentActivity() {
 
     private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
         if (dbHelper.isEmpty()) {
-            // Только новые танцоры
             val defaultDancers = listOf(
                 DancerUser(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
                 DancerUser(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
@@ -255,7 +254,7 @@ class UserActivity : ComponentActivity() {
             MakeUserAlertDialog(context = mContext, dialogTitle = "Информация о танцоре", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Танцоры") },
+            title = { Text("Танцоры", fontSize = 20.sp) },
             actions = {
                 Button(
                     onClick = {
@@ -281,7 +280,7 @@ class UserActivity : ComponentActivity() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MakeUserList(viewModel = model, lazyListState, dbHelper)
@@ -292,7 +291,7 @@ class UserActivity : ComponentActivity() {
     fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
         val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize().background(Color.White),
             state = lazyListState
         ) {
@@ -309,8 +308,8 @@ class UserActivity : ComponentActivity() {
     fun MakeUserAlertDialog(context: Context, dialogTitle: String, openDialog: MutableState<Boolean>) {
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
-            title = { Text(text = dialogTitle) },
-            text = { Text(text = "Информация о танцоре", fontSize = 20.sp) },
+            title = { Text(text = dialogTitle, fontSize = 20.sp) },
+            text = { Text(text = "Информация о танцоре", fontSize = 18.sp) },
             confirmButton = {
                 Button(onClick = { openDialog.value = false }) { Text(text = "OK") }
             }
@@ -346,43 +345,38 @@ class UserActivity : ComponentActivity() {
                     onLongClick = {}
                 )
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                Column {
-                    Text(
-                        text = "${model.name} ${model.surname}",
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(start = 18.dp),
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "Группа: ${model.group}",
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
-                }
-                Column {
-                    Text(
-                        text = "Роль: ${model.role}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
-                }
+                Text(
+                    text = "${model.name} ${model.surname}",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 1
+                )
+                Text(
+                    text = "Группа: ${model.group}",
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = Color.DarkGray,
+                    maxLines = 1
+                )
+                Text(
+                    text = "Роль: ${model.role}",
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = Color.DarkGray,
+                    maxLines = 1
+                )
             }
+
             Image(
                 painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
                 else rememberImagePainter(model.picture),
                 contentDescription = "",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.size(75.dp)
+                modifier = Modifier.size(60.dp)
             )
         }
     }

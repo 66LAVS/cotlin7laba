@@ -25,6 +25,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -157,7 +158,6 @@ class AdminActivity : ComponentActivity() {
 
     private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
         if (dbHelper.isEmpty()) {
-            // Только новые танцоры
             val defaultDancers = listOf(
                 Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
                 Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
@@ -336,27 +336,27 @@ class AdminActivity : ComponentActivity() {
             }
 
         if (openDialog.value)
-            MakeAlertDialog(context = mContext, dialogTitle = "About", openDialog = openDialog)
+            MakeAlertDialog(context = mContext, dialogTitle = "О нас", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Админ: Танцоры") },
+            title = { Text("Админ: Танцоры", fontSize = 20.sp) },
             actions = {
                 IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
-                    Text("☰")
+                    Text("☰", fontSize = 20.sp)
                 }
                 DropdownMenu(
                     expanded = mDisplayMenu,
                     onDismissRequest = { mDisplayMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text(text = "О нас") },
+                        text = { Text(text = "О нас", fontSize = 16.sp) },
                         onClick = {
                             mDisplayMenu = !mDisplayMenu
                             openDialog.value = true
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Добавить танцора") },
+                        text = { Text(text = "Добавить танцора", fontSize = 16.sp) },
                         onClick = {
                             val newAct = Intent(mContext, InputActivity::class.java)
                             startForResult.launch(newAct)
@@ -364,7 +364,7 @@ class AdminActivity : ComponentActivity() {
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Выйти") },
+                        text = { Text(text = "Выйти", fontSize = 16.sp) },
                         onClick = {
                             val prefs = mContext.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
                             prefs.edit().clear().apply()
@@ -382,7 +382,7 @@ class AdminActivity : ComponentActivity() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MakeList(viewModel = model, lazyListState, dbHelper)
@@ -393,7 +393,7 @@ class AdminActivity : ComponentActivity() {
     fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
         val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxSize().background(Color.White),
             state = lazyListState
         ) {
@@ -410,8 +410,8 @@ class AdminActivity : ComponentActivity() {
     fun MakeAlertDialog(context: Context, dialogTitle: String, openDialog: MutableState<Boolean>) {
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
-            title = { Text(text = dialogTitle) },
-            text = { Text(text = "Приложение для управления танцорами", fontSize = 20.sp) },
+            title = { Text(text = dialogTitle, fontSize = 20.sp) },
+            text = { Text(text = "Приложение для управления танцорами", fontSize = 18.sp) },
             confirmButton = {
                 Button(onClick = { openDialog.value = false }) { Text(text = "OK") }
             }
@@ -432,7 +432,7 @@ class AdminActivity : ComponentActivity() {
 
         AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Редактировать танцора", fontSize = 22.sp, fontWeight = FontWeight.Bold) },
+            title = { Text("Редактировать танцора", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -477,12 +477,12 @@ class AdminActivity : ComponentActivity() {
                         }
                     }
                 ) {
-                    Text("Сохранить")
+                    Text("Сохранить", fontSize = 16.sp)
                 }
             },
             dismissButton = {
                 Button(onClick = onDismiss) {
-                    Text("Отмена")
+                    Text("Отмена", fontSize = 16.sp)
                 }
             }
         )
@@ -522,18 +522,19 @@ class AdminActivity : ComponentActivity() {
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
-                .wrapContentHeight()
                 .fillMaxWidth()
-                .border(BorderStroke(2.dp, Color.Red))
-                .padding(8.dp)
+                .wrapContentHeight()
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
+                    .wrapContentHeight()
                     .fillMaxWidth()
+                    .border(BorderStroke(2.dp, Color.Red))
+                    .padding(8.dp)
                     .combinedClickable(
                         onClick = {
                             dancerSelected.value = "${model.name} ${model.surname}"
@@ -544,36 +545,30 @@ class AdminActivity : ComponentActivity() {
                         }
                     )
             ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Column {
-                        Text(
-                            text = "${model.name} ${model.surname}",
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(start = 18.dp),
-                            color = Color.Black
-                        )
-                        Text(
-                            text = "Группа: ${model.group}",
-                            fontSize = 16.sp,
-                            modifier = Modifier.padding(10.dp),
-                            fontStyle = FontStyle.Italic,
-                            color = Color.Black
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "Роль: ${model.role}",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(10.dp),
-                            fontStyle = FontStyle.Italic,
-                            color = Color.Black
-                        )
-                    }
+                    Text(
+                        text = "${model.name} ${model.surname}",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Группа: ${model.group}",
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = Color.DarkGray,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Роль: ${model.role}",
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = Color.DarkGray,
+                        maxLines = 1
+                    )
                 }
 
                 Image(
@@ -581,25 +576,28 @@ class AdminActivity : ComponentActivity() {
                     else rememberImagePainter(model.picture),
                     contentDescription = "",
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(75.dp)
+                    modifier = Modifier.size(60.dp)
                 )
             }
 
             DropdownMenu(
                 expanded = mDisplayMenu,
-                onDismissRequest = { mDisplayMenu = false }
+                onDismissRequest = { mDisplayMenu = false },
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .background(Color.White)
             ) {
                 DropdownMenuItem(
-                    text = { Text("✏️ Редактировать", fontSize = 20.sp, fontWeight = FontWeight.SemiBold) },
+                    text = { Text("Редактировать", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) },
                     onClick = {
-                        mDisplayMenu = !mDisplayMenu
+                        mDisplayMenu = false
                         showEditDialog = true
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("🖼️ Сменить фото", fontSize = 20.sp, fontWeight = FontWeight.SemiBold) },
+                    text = { Text("Сменить фото", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) },
                     onClick = {
-                        mDisplayMenu = !mDisplayMenu
+                        mDisplayMenu = false
                         val permission: String = Manifest.permission.READ_EXTERNAL_STORAGE
                         val grant = ContextCompat.checkSelfPermission(context, permission)
                         if (grant != PackageManager.PERMISSION_GRANTED) {
@@ -619,32 +617,32 @@ class AdminActivity : ComponentActivity() {
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("🗑️ Удалить", fontSize = 20.sp) },
+                    text = { Text("Удалить", fontSize = 16.sp) },
                     onClick = {
-                        mDisplayMenu = !mDisplayMenu
+                        mDisplayMenu = false
                         viewModel.removeItem(model)
                         dbHelper.deleteDancer(model)
                         refreshDancersFromDb(dbHelper)
                     }
                 )
             }
+        }
 
-            if (showEditDialog) {
-                EditDancerDialog(
-                    context = context,
-                    dancer = model,
-                    onDismiss = { showEditDialog = false },
-                    onSave = { name, surname, group, role ->
-                        val index = dancerListState.indexOf(model)
-                        viewModel.updateDancer(index, name, surname, group, role)
-                        val updatedDancer = dancerListState[index]
-                        dbHelper.updateDancer(updatedDancer)
-                        showEditDialog = false
-                        Toast.makeText(context, "Танцор обновлен!", Toast.LENGTH_SHORT).show()
-                        refreshDancersFromDb(dbHelper)
-                    }
-                )
-            }
+        if (showEditDialog) {
+            EditDancerDialog(
+                context = context,
+                dancer = model,
+                onDismiss = { showEditDialog = false },
+                onSave = { name, surname, group, role ->
+                    val index = dancerListState.indexOf(model)
+                    viewModel.updateDancer(index, name, surname, group, role)
+                    val updatedDancer = dancerListState[index]
+                    dbHelper.updateDancer(updatedDancer)
+                    showEditDialog = false
+                    Toast.makeText(context, "Танцор обновлен!", Toast.LENGTH_SHORT).show()
+                    refreshDancersFromDb(dbHelper)
+                }
+            )
         }
     }
 
@@ -678,14 +676,14 @@ class AdminActivity : ComponentActivity() {
                 TextField(
                     value = dancerName,
                     onValueChange = { newText -> dancerName = newText },
-                    textStyle = TextStyle(fontSize = 20.sp),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Имя") },
                     modifier = Modifier.weight(1f)
                 )
                 TextField(
                     value = dancerSurname,
                     onValueChange = { newText -> dancerSurname = newText },
-                    textStyle = TextStyle(fontSize = 20.sp),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Фамилия") },
                     modifier = Modifier.weight(1f)
                 )
@@ -698,14 +696,14 @@ class AdminActivity : ComponentActivity() {
                 TextField(
                     value = dancerGroup,
                     onValueChange = { newText -> dancerGroup = newText },
-                    textStyle = TextStyle(fontSize = 20.sp),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Группа") },
                     modifier = Modifier.weight(1f)
                 )
                 TextField(
                     value = dancerRole,
                     onValueChange = { newText -> dancerRole = newText },
-                    textStyle = TextStyle(fontSize = 20.sp),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Роль") },
                     modifier = Modifier.weight(1f)
                 )
@@ -725,7 +723,7 @@ class AdminActivity : ComponentActivity() {
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Add Dancer")
+                Text("Add Dancer", fontSize = 16.sp)
             }
         }
     }
