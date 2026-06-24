@@ -26,9 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import com.example.laba4.Dancer
 import com.example.laba4.ui.theme.Laba4Theme
 
 class InputActivity : ComponentActivity() {
@@ -132,7 +129,6 @@ class InputActivity : ComponentActivity() {
                     onClick = {
                         println("added $dancerName $dancerSurname $dancerGroup $dancerRole")
                         val intent = Intent()
-                        // Исправлено: передаем все 4 параметра в правильном порядке
                         val newDancer = Dancer(
                             name = dancerName,
                             surname = dancerSurname,

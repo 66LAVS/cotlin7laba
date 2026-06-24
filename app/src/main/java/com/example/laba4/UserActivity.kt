@@ -1,5 +1,6 @@
 package com.example.laba4
 
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -63,7 +64,6 @@ import kotlinx.coroutines.flow.StateFlow
 import java.io.Serializable
 import java.util.UUID
 
-// Data class for Dancers
 data class DancerUser(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
@@ -84,7 +84,13 @@ class UserViewModel : ViewModel() {
         DancerUser(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
         DancerUser(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
         DancerUser(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
+        DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
     )
 
     private val _dancerListFlow = MutableStateFlow(dancerList)
@@ -281,8 +287,7 @@ class UserActivity : ComponentActivity() {
                         val intent = Intent(mContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         mContext.startActivity(intent)
-
-                        (mContext as? android.app.Activity)?.finish()
+                        (mContext as? Activity)?.finish()
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Red,

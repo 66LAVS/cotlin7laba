@@ -55,9 +55,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Обработка системной кнопки "Назад" - закрываем приложение
         onBackPressedDispatcher.addCallback(this) {
-            finishAffinity() // Закрываем все активности
+            finishAffinity()
         }
 
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -65,9 +64,7 @@ class MainActivity : ComponentActivity() {
         val username = prefs.getString(KEY_USERNAME, "")
         val password = prefs.getString(KEY_PASSWORD, "")
 
-        // Автовход если есть сохраненные данные
         if (username != null && password != null && username.isNotEmpty() && password.isNotEmpty()) {
-            // Проверяем, существует ли пользователь в БД
             val dbHelper = UsersDbHelper(this)
             if (dbHelper.userExists(username)) {
                 val cursor = dbHelper.getUser(username)
@@ -101,7 +98,6 @@ class MainActivity : ComponentActivity() {
                 cursor?.close()
                 dbHelper.close()
             }
-            // Если проверка не прошла, очищаем SharedPreferences
             prefs.edit().clear().apply()
         }
 
@@ -183,7 +179,6 @@ class MainActivity : ComponentActivity() {
             Button(
                 onClick = {
                     if (isRegistering) {
-                        // РЕГИСТРАЦИЯ
                         if (username == "admin123") {
                             Toast.makeText(context, "Username 'admin123' is reserved for admin", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -206,11 +201,9 @@ class MainActivity : ComponentActivity() {
                             return@Button
                         }
 
-                        // Сохраняем в БД
                         dbHelper.addUser(username, password, false)
                         dbHelper.close()
 
-                        // Сохраняем в SharedPreferences
                         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit().apply {
                             putString(KEY_USERNAME, username)
@@ -226,10 +219,8 @@ class MainActivity : ComponentActivity() {
                         context.startActivity(intent)
 
                     } else {
-                        // ВХОД
                         val dbHelper = UsersDbHelper(context)
 
-                        // Проверяем админа (hardcoded)
                         if (username == "admin123" && password == "admin123") {
                             Toast.makeText(context, "Admin Login Successful!", Toast.LENGTH_SHORT).show()
                             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -246,7 +237,6 @@ class MainActivity : ComponentActivity() {
                             return@Button
                         }
 
-                        // Проверяем обычного пользователя в БД
                         if (dbHelper.userExists(username)) {
                             val cursor = dbHelper.getUser(username)
                             if (cursor != null && cursor.moveToFirst()) {
@@ -332,7 +322,7 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "👤 Register as a regular user to view dancers",
+                            text = "👤 Register as a regular user to view dancers\n👑 Admin: admin123 / admin123",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )

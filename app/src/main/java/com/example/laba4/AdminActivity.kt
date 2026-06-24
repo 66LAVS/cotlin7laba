@@ -79,7 +79,6 @@ import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.util.UUID
 
-// Data class for Dancers
 data class Dancer(
     val id: String = UUID.randomUUID().toString(),
     val name: String,
@@ -100,7 +99,13 @@ class ItemViewModel : ViewModel() {
         Dancer(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
         Dancer(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
         Dancer(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
+        Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
     )
 
     private val _dancerListFlow = MutableStateFlow(dancerList)
@@ -112,6 +117,15 @@ class ItemViewModel : ViewModel() {
 
     fun changeImage(index: Int, value: String) {
         dancerList[index] = dancerList[index].copy(picture = value)
+    }
+
+    fun updateDancer(index: Int, name: String, surname: String, group: String, role: String) {
+        dancerList[index] = dancerList[index].copy(
+            name = name,
+            surname = surname,
+            group = group,
+            role = role
+        )
     }
 
     fun addDancerToHead(dancer: Dancer) {
@@ -267,6 +281,19 @@ class AdminActivity : ComponentActivity() {
             db.close()
         }
 
+        fun updateDancer(dancer: Dancer) {
+            val db = this.writableDatabase
+            val values = ContentValues()
+            values.put(NAME_COL, dancer.name)
+            values.put(SURNAME_COL, dancer.surname)
+            values.put(GROUP_COL, dancer.group)
+            values.put(ROLE_COL, dancer.role)
+            values.put(PICTURE_COL, dancer.picture)
+
+            db.update(TABLE_NAME, values, "$ID_COL = ?", arrayOf(dancer.id))
+            db.close()
+        }
+
         fun changeImgForDancer(name: String, surname: String, img: String) {
             val db = this.writableDatabase
             val values = ContentValues()
@@ -362,6 +389,7 @@ class AdminActivity : ComponentActivity() {
                             val intent = Intent(mContext, MainActivity::class.java)
                             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             mContext.startActivity(intent)
+                            (mContext as? Activity)?.finish()
                         }
                     )
                 }
@@ -426,6 +454,12 @@ class AdminActivity : ComponentActivity() {
         val openDialog = remember { mutableStateOf(false) }
         var dancerSelected = remember { mutableStateOf("") }
 
+        var isEditing by remember { mutableStateOf(false) }
+        var editName by remember { mutableStateOf(model.name) }
+        var editSurname by remember { mutableStateOf(model.surname) }
+        var editGroup by remember { mutableStateOf(model.group) }
+        var editRole by remember { mutableStateOf(model.role) }
+
         if (openDialog.value) MakeAlertDialog(context, dancerSelected.value, openDialog)
 
         var mDisplayMenu by remember { mutableStateOf(false) }
@@ -446,110 +480,203 @@ class AdminActivity : ComponentActivity() {
             }
         }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+        Column(
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()
                 .border(BorderStroke(2.dp, Color.Red))
-                .combinedClickable(
-                    onClick = {
-                        println("item = ${model.name} ${model.surname}")
-                        dancerSelected.value = "${model.name} ${model.surname}"
-                        Toast.makeText(context, "item = ${model.name} ${model.surname}", Toast.LENGTH_LONG).show()
-                        openDialog.value = true
-                    },
-                    onLongClick = {
-                        mDisplayMenu = true
-                    }
-                )
+                .padding(8.dp)
         ) {
             Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .combinedClickable(
+                        onClick = {
+                            println("item = ${model.name} ${model.surname}")
+                            dancerSelected.value = "${model.name} ${model.surname}"
+                            Toast.makeText(context, "item = ${model.name} ${model.surname}", Toast.LENGTH_LONG).show()
+                            openDialog.value = true
+                        },
+                        onLongClick = {
+                            mDisplayMenu = true
+                        }
+                    )
             ) {
-                Column {
-                    Text(
-                        text = "${model.name} ${model.surname}",
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(start = 18.dp),
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "Группа: ${model.group}",
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
-                }
-                Column {
-                    Text(
-                        text = "Роль: ${model.role}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
+                if (isEditing) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        TextField(
+                            value = editName,
+                            onValueChange = { editName = it },
+                            label = { Text("Имя") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = TextStyle(fontSize = 14.sp)
+                        )
+                        TextField(
+                            value = editSurname,
+                            onValueChange = { editSurname = it },
+                            label = { Text("Фамилия") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = TextStyle(fontSize = 14.sp)
+                        )
+                        TextField(
+                            value = editGroup,
+                            onValueChange = { editGroup = it },
+                            label = { Text("Группа") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = TextStyle(fontSize = 14.sp)
+                        )
+                        TextField(
+                            value = editRole,
+                            onValueChange = { editRole = it },
+                            label = { Text("Роль") },
+                            modifier = Modifier.fillMaxWidth(),
+                            textStyle = TextStyle(fontSize = 14.sp)
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "${model.name} ${model.surname}",
+                                fontSize = 19.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(start = 18.dp),
+                                color = Color.Black
+                            )
+                            Text(
+                                text = "Группа: ${model.group}",
+                                fontSize = 16.sp,
+                                modifier = Modifier.padding(10.dp),
+                                fontStyle = FontStyle.Italic,
+                                color = Color.Black
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = "Роль: ${model.role}",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(10.dp),
+                                fontStyle = FontStyle.Italic,
+                                color = Color.Black
+                            )
+                        }
+                    }
                 }
 
-                DropdownMenu(
-                    expanded = mDisplayMenu,
-                    onDismissRequest = { mDisplayMenu = false }
+                Image(
+                    painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
+                    else rememberImagePainter(model.picture),
+                    contentDescription = "",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.size(75.dp)
+                )
+            }
+
+            if (isEditing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "Change Picture",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        },
+                    Button(
                         onClick = {
-                            mDisplayMenu = !mDisplayMenu
-                            val permission: String = Manifest.permission.READ_EXTERNAL_STORAGE
-                            val grant = ContextCompat.checkSelfPermission(context, permission)
-                            if (grant != PackageManager.PERMISSION_GRANTED) {
-                                val permission_list = arrayOfNulls<String>(1)
-                                permission_list[0] = permission
-                                ActivityCompat.requestPermissions(
-                                    context as Activity, permission_list, 1
-                                )
-                            }
-                            val intent = Intent(
-                                Intent.ACTION_OPEN_DOCUMENT,
-                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                            ).apply {
-                                addCategory(Intent.CATEGORY_OPENABLE)
-                            }
-                            launcher.launch(intent)
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "Delete Dancer",
-                                fontSize = 20.sp,
-                            )
+                            val index = dancerListState.indexOf(model)
+                            viewModel.updateDancer(index, editName, editSurname, editGroup, editRole)
+                            val updatedDancer = dancerListState[index]
+                            dbHelper.updateDancer(updatedDancer)
+                            isEditing = false
+                            Toast.makeText(context, "Dancer updated!", Toast.LENGTH_SHORT).show()
                         },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Save")
+                    }
+                    Button(
                         onClick = {
-                            mDisplayMenu = !mDisplayMenu
-                            viewModel.removeItem(model)
-                            dbHelper.deleteDancer(model)
-                        }
-                    )
+                            editName = model.name
+                            editSurname = model.surname
+                            editGroup = model.group
+                            editRole = model.role
+                            isEditing = false
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancel")
+                    }
                 }
             }
-            Image(
-                painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
-                else rememberImagePainter(model.picture),
-                contentDescription = "",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(75.dp)
-            )
+
+            DropdownMenu(
+                expanded = mDisplayMenu,
+                onDismissRequest = { mDisplayMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Edit Dancer",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
+                    onClick = {
+                        mDisplayMenu = !mDisplayMenu
+                        editName = model.name
+                        editSurname = model.surname
+                        editGroup = model.group
+                        editRole = model.role
+                        isEditing = true
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Change Picture",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    },
+                    onClick = {
+                        mDisplayMenu = !mDisplayMenu
+                        val permission: String = Manifest.permission.READ_EXTERNAL_STORAGE
+                        val grant = ContextCompat.checkSelfPermission(context, permission)
+                        if (grant != PackageManager.PERMISSION_GRANTED) {
+                            val permission_list = arrayOfNulls<String>(1)
+                            permission_list[0] = permission
+                            ActivityCompat.requestPermissions(
+                                context as Activity, permission_list, 1
+                            )
+                        }
+                        val intent = Intent(
+                            Intent.ACTION_OPEN_DOCUMENT,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        ).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                        }
+                        launcher.launch(intent)
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Delete Dancer",
+                            fontSize = 20.sp,
+                        )
+                    },
+                    onClick = {
+                        mDisplayMenu = !mDisplayMenu
+                        viewModel.removeItem(model)
+                        dbHelper.deleteDancer(model)
+                    }
+                )
+            }
         }
     }
 
