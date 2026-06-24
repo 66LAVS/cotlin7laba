@@ -63,23 +63,39 @@ import kotlinx.coroutines.flow.StateFlow
 import java.io.Serializable
 import java.util.UUID
 
-// НЕ ОБЪЯВЛЯЕМ КЛАСС Medicine ЗДЕСЬ!
-// Он уже есть в AdminActivity, и мы будем его использовать
+// Data class for Dancers
+data class DancerUser(
+    val id: String = UUID.randomUUID().toString(),
+    val name: String,
+    val surname: String,
+    val group: String,
+    val role: String,
+    var picture: String = R.drawable.no_picture.toString()
+) : Serializable
 
 class UserViewModel : ViewModel() {
 
-    // Используем класс Medicine из AdminActivity
-    private var medicineList = mutableStateListOf<Medicine>()
+    private var dancerList = mutableStateListOf(
+        DancerUser(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
+        DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
+    )
 
-    private val _medicineListFlow = MutableStateFlow(medicineList)
-    val medicineListFlow: StateFlow<List<Medicine>> get() = _medicineListFlow
+    private val _dancerListFlow = MutableStateFlow(dancerList)
+    val dancerListFlow: StateFlow<List<DancerUser>> get() = _dancerListFlow
 
     fun clearList() {
-        medicineList.clear()
+        dancerList.clear()
     }
 
-    fun addMedicineToEnd(medicine: Medicine) {
-        medicineList.add(medicine)
+    fun addDancerToEnd(dancer: DancerUser) {
+        dancerList.add(dancer)
     }
 }
 
@@ -90,44 +106,32 @@ class UserActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Используем ТУ ЖЕ САМУЮ базу данных, что и AdminActivity
-        val dbHelper = MedicinesDbHelper(this)
+        val dbHelper = UserDancersDbHelper(this)
 
-        if (savedInstanceState != null && savedInstanceState.containsKey("medicines")) {
-            val tempMedicineArray = savedInstanceState.getSerializable("medicines") as ArrayList<Medicine>
+        if (savedInstanceState != null && savedInstanceState.containsKey("dancers")) {
+            val tempDancerArray = savedInstanceState.getSerializable("dancers") as ArrayList<DancerUser>
             viewModel.clearList()
-            tempMedicineArray.forEach {
-                viewModel.addMedicineToEnd(it)
+            tempDancerArray.forEach {
+                viewModel.addDancerToEnd(it)
             }
             Toast.makeText(this, "From saved", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(this, "Loading medicines...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Loading dancers...", Toast.LENGTH_SHORT).show()
             if (dbHelper.isEmpty()) {
                 println("DB is empty")
-                // Добавляем начальные данные
-                val defaultMedicines = listOf(
-                    Medicine(name = "Paracetamol", price = 150.0, quantity = 50, manufacturer = "PharmaCo"),
-                    Medicine(name = "Aspirin", price = 200.0, quantity = 30, manufacturer = "MedLife"),
-                    Medicine(name = "Ibuprofen", price = 250.0, quantity = 40, manufacturer = "HealthPlus"),
-                    Medicine(name = "Amoxicillin", price = 350.0, quantity = 20, manufacturer = "BioMed"),
-                    Medicine(name = "Omeprazole", price = 180.0, quantity = 60, manufacturer = "GastroCare"),
-                    Medicine(name = "Loratadine", price = 120.0, quantity = 45, manufacturer = "AllergyRelief"),
-                    Medicine(name = "Metformin", price = 280.0, quantity = 35, manufacturer = "DiabetesCare"),
-                    Medicine(name = "Atorvastatin", price = 400.0, quantity = 25, manufacturer = "HeartHealth"),
-                    Medicine(name = "Vitamin D", price = 90.0, quantity = 100, manufacturer = "NutriLife")
-                )
-                defaultMedicines.forEach {
-                    viewModel.addMedicineToEnd(it)
-                    dbHelper.addMedicine(it)
+                var tempDancerArray = ArrayList<DancerUser>()
+                viewModel.dancerListFlow.value.forEach {
+                    tempDancerArray.add(it)
                 }
+                dbHelper.addArrayToDB(tempDancerArray)
                 dbHelper.printDB()
             } else {
                 println("DB has records")
                 dbHelper.printDB()
-                val tempMedicineArray = dbHelper.getMedicinesArray()
+                val tempDancerArray = dbHelper.getDancersArray()
                 viewModel.clearList()
-                tempMedicineArray.forEach {
-                    viewModel.addMedicineToEnd(it)
+                tempDancerArray.forEach {
+                    viewModel.addDancerToEnd(it)
                 }
             }
         }
@@ -148,26 +152,25 @@ class UserActivity : ComponentActivity() {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        var tempMedicineArray = ArrayList<Medicine>()
-        viewModel.medicineListFlow.value.forEach {
-            tempMedicineArray.add(it)
+        var tempDancerArray = ArrayList<DancerUser>()
+        viewModel.dancerListFlow.value.forEach {
+            tempDancerArray.add(it)
         }
-        outState.putSerializable("medicines", tempMedicineArray)
+        outState.putSerializable("dancers", tempDancerArray)
         super.onSaveInstanceState(outState)
     }
 
-    // Класс для работы с базой данных - ТОТ ЖЕ, что и в AdminActivity
-    class MedicinesDbHelper(context: Context) :
+    class UserDancersDbHelper(context: Context) :
         SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
         companion object {
-            private val DATABASE_NAME = "MEDICINES"
+            private val DATABASE_NAME = "DANCERS_USER"
             private val DATABASE_VERSION = 1
-            val TABLE_NAME = "medicines_table"
+            val TABLE_NAME = "dancers_table"
             val ID_COL = "id"
-            val NAME_COL = "medicine_name"
-            val PRICE_COL = "price"
-            val QUANTITY_COL = "quantity"
-            val MANUFACTURER_COL = "manufacturer"
+            val NAME_COL = "dancer_name"
+            val SURNAME_COL = "dancer_surname"
+            val GROUP_COL = "dancer_group"
+            val ROLE_COL = "dancer_role"
             val PICTURE_COL = "picture"
         }
 
@@ -175,9 +178,9 @@ class UserActivity : ComponentActivity() {
             val query = ("CREATE TABLE " + TABLE_NAME + " (" +
                     ID_COL + " TEXT PRIMARY KEY, " +
                     NAME_COL + " TEXT, " +
-                    PRICE_COL + " REAL, " +
-                    QUANTITY_COL + " INTEGER, " +
-                    MANUFACTURER_COL + " TEXT, " +
+                    SURNAME_COL + " TEXT, " +
+                    GROUP_COL + " TEXT, " +
+                    ROLE_COL + " TEXT, " +
                     PICTURE_COL + " TEXT)")
             db.execSQL(query)
         }
@@ -202,71 +205,71 @@ class UserActivity : ComponentActivity() {
             if (!isEmpty()) {
                 cursor.moveToFirst()
                 val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val priceColIndex = cursor.getColumnIndex(PRICE_COL)
+                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
                 do {
                     print("${cursor.getString(nameColIndex)} ")
-                    print("${cursor.getDouble(priceColIndex)} ")
+                    print("${cursor.getString(surnameColIndex)} ")
                 } while (cursor.moveToNext())
             } else println("DB is empty")
         }
 
-        fun addArrayToDB(medicines: ArrayList<Medicine>) {
-            medicines.forEach {
-                addMedicine(it)
+        fun addArrayToDB(dancers: ArrayList<DancerUser>) {
+            dancers.forEach {
+                addDancer(it)
             }
         }
 
-        fun addMedicine(medicine: Medicine) {
+        fun addDancer(dancer: DancerUser) {
             val values = ContentValues()
-            values.put(ID_COL, medicine.id)
-            values.put(NAME_COL, medicine.name)
-            values.put(PRICE_COL, medicine.price)
-            values.put(QUANTITY_COL, medicine.quantity)
-            values.put(MANUFACTURER_COL, medicine.manufacturer)
-            values.put(PICTURE_COL, medicine.picture)
+            values.put(ID_COL, dancer.id)
+            values.put(NAME_COL, dancer.name)
+            values.put(SURNAME_COL, dancer.surname)
+            values.put(GROUP_COL, dancer.group)
+            values.put(ROLE_COL, dancer.role)
+            values.put(PICTURE_COL, dancer.picture)
 
             val db = this.writableDatabase
             db.insert(TABLE_NAME, null, values)
             db.close()
         }
 
-        fun getMedicinesArray(): ArrayList<Medicine> {
-            var medicinesArray = ArrayList<Medicine>()
+        fun getDancersArray(): ArrayList<DancerUser> {
+            var dancersArray = ArrayList<DancerUser>()
             val cursor = getCursor()
             if (!isEmpty()) {
                 cursor.moveToFirst()
                 val idColIndex = cursor.getColumnIndex(ID_COL)
                 val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val priceColIndex = cursor.getColumnIndex(PRICE_COL)
-                val quantityColIndex = cursor.getColumnIndex(QUANTITY_COL)
-                val manufacturerColIndex = cursor.getColumnIndex(MANUFACTURER_COL)
+                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
+                val groupColIndex = cursor.getColumnIndex(GROUP_COL)
+                val roleColIndex = cursor.getColumnIndex(ROLE_COL)
                 val pictureColIndex = cursor.getColumnIndex(PICTURE_COL)
 
                 do {
                     val id = cursor.getString(idColIndex)
                     val name = cursor.getString(nameColIndex)
-                    val price = cursor.getDouble(priceColIndex)
-                    val quantity = cursor.getInt(quantityColIndex)
-                    val manufacturer = cursor.getString(manufacturerColIndex)
+                    val surname = cursor.getString(surnameColIndex)
+                    val group = cursor.getString(groupColIndex)
+                    val role = cursor.getString(roleColIndex)
                     val picture = cursor.getString(pictureColIndex)
-                    medicinesArray.add(Medicine(id, name, price, quantity, manufacturer, picture))
+                    dancersArray.add(DancerUser(id, name, surname, group, role, picture))
                 } while (cursor.moveToNext())
             } else println("DB is empty")
-            return medicinesArray
+            return dancersArray
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
+    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: UserDancersDbHelper) {
         val mContext = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
 
         if (openDialog.value)
-            MakeUserAlertDialog(context = mContext, dialogTitle = "Medicine Details", openDialog = openDialog)
+            MakeUserAlertDialog(context = mContext, dialogTitle = "Dancer Details", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Medicines Catalog") },
+            title = { Text("Dancers Catalog") },
             actions = {
                 Button(
                     onClick = {
@@ -303,18 +306,18 @@ class UserActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
-        val medicineListState = viewModel.medicineListFlow.collectAsState()
+    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: UserDancersDbHelper) {
+        val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize().background(Color.White),
             state = lazyListState
         ) {
             items(
-                items = viewModel.medicineListFlow.value,
+                items = viewModel.dancerListFlow.value,
                 key = { it.id }
             ) { item ->
-                UserListRow(item, medicineListState.value, viewModel, dbHelper)
+                UserListRow(item, dancerListState.value, viewModel, dbHelper)
             }
         }
     }
@@ -340,16 +343,16 @@ class UserActivity : ComponentActivity() {
 
     @Composable
     fun UserListRow(
-        model: Medicine,
-        medicineListState: List<Medicine>,
+        model: DancerUser,
+        dancerListState: List<DancerUser>,
         viewModel: UserViewModel,
-        dbHelper: MedicinesDbHelper
+        dbHelper: UserDancersDbHelper
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
-        var medicineSelected = remember { mutableStateOf("") }
+        var dancerSelected = remember { mutableStateOf("") }
 
-        if (openDialog.value) MakeUserAlertDialog(context, medicineSelected.value, openDialog)
+        if (openDialog.value) MakeUserAlertDialog(context, dancerSelected.value, openDialog)
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -361,9 +364,9 @@ class UserActivity : ComponentActivity() {
                 .padding(8.dp)
                 .combinedClickable(
                     onClick = {
-                        println("Viewing item: ${model.name}")
-                        medicineSelected.value = model.name
-                        Toast.makeText(context, "Viewing: ${model.name}", Toast.LENGTH_SHORT).show()
+                        println("Viewing dancer: ${model.name} ${model.surname}")
+                        dancerSelected.value = "${model.name} ${model.surname}"
+                        Toast.makeText(context, "Viewing: ${model.name} ${model.surname}", Toast.LENGTH_SHORT).show()
                         openDialog.value = true
                     },
                     onLongClick = {
@@ -377,14 +380,14 @@ class UserActivity : ComponentActivity() {
             ) {
                 Column {
                     Text(
-                        text = model.name,
+                        text = "${model.name} ${model.surname}",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(start = 18.dp),
                         color = Color.Black
                     )
                     Text(
-                        text = "Price: $${model.price}",
+                        text = "Группа: ${model.group}",
                         fontSize = 16.sp,
                         modifier = Modifier.padding(10.dp),
                         fontStyle = FontStyle.Italic,
@@ -393,40 +396,22 @@ class UserActivity : ComponentActivity() {
                 }
                 Column {
                     Text(
-                        text = "Qty: ${model.quantity}",
+                        text = "Роль: ${model.role}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(10.dp),
                         fontStyle = FontStyle.Italic,
                         color = Color.Black
                     )
-                    Text(
-                        text = model.manufacturer,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
                 }
             }
-            // Отображаем картинку если она есть
-            if (model.picture.isNotEmpty() && model.picture != "no_picture") {
-                Image(
-                    painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
-                    else rememberImagePainter(model.picture),
-                    contentDescription = "",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(75.dp)
-                )
-            } else {
-                // Заглушка если нет картинки
-                Image(
-                    painter = painterResource(android.R.drawable.ic_menu_gallery),
-                    contentDescription = "No image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(75.dp)
-                )
-            }
+            Image(
+                painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
+                else rememberImagePainter(model.picture),
+                contentDescription = "",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(75.dp)
+            )
         }
     }
 

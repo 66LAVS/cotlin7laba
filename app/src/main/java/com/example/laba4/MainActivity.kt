@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Обработка системной кнопки "Назад" - закрываем приложение только если нет других активностей
+        // Обработка системной кнопки "Назад" - закрываем приложение
         onBackPressedDispatcher.addCallback(this) {
             finishAffinity() // Закрываем все активности
         }
@@ -67,13 +67,42 @@ class MainActivity : ComponentActivity() {
 
         // Автовход если есть сохраненные данные
         if (username != null && password != null && username.isNotEmpty() && password.isNotEmpty()) {
-            if (isAdmin) {
-                startActivity(Intent(this, AdminActivity::class.java))
-                return
-            } else {
-                startActivity(Intent(this, UserActivity::class.java))
-                return
+            // Проверяем, существует ли пользователь в БД
+            val dbHelper = UsersDbHelper(this)
+            if (dbHelper.userExists(username)) {
+                val cursor = dbHelper.getUser(username)
+                if (cursor != null && cursor.moveToFirst()) {
+                    val passwordColIndex = cursor.getColumnIndex(UsersDbHelper.PASSWORD_COL)
+                    val isAdminColIndex = cursor.getColumnIndex(UsersDbHelper.IS_ADMIN_COL)
+
+                    if (passwordColIndex >= 0 && isAdminColIndex >= 0) {
+                        val dbPassword = cursor.getString(passwordColIndex)
+                        val dbIsAdmin = cursor.getInt(isAdminColIndex) == 1
+
+                        if (password == dbPassword) {
+                            if (dbIsAdmin) {
+                                val intent = Intent(this, AdminActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                startActivity(intent)
+                                cursor.close()
+                                dbHelper.close()
+                                return
+                            } else {
+                                val intent = Intent(this, UserActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                startActivity(intent)
+                                cursor.close()
+                                dbHelper.close()
+                                return
+                            }
+                        }
+                    }
+                }
+                cursor?.close()
+                dbHelper.close()
             }
+            // Если проверка не прошла, очищаем SharedPreferences
+            prefs.edit().clear().apply()
         }
 
         setContent {
@@ -86,11 +115,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        // При возврате из UserActivity обновляем состояние
     }
 
     @Composable
@@ -109,7 +133,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (isRegistering) "Create Account" else "Medicine App Login",
+                text = if (isRegistering) "Create Account" else "Dancers App Login",
                 style = TextStyle(
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
@@ -159,6 +183,7 @@ class MainActivity : ComponentActivity() {
             Button(
                 onClick = {
                     if (isRegistering) {
+                        // РЕГИСТРАЦИЯ
                         if (username == "admin123") {
                             Toast.makeText(context, "Username 'admin123' is reserved for admin", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -181,9 +206,11 @@ class MainActivity : ComponentActivity() {
                             return@Button
                         }
 
+                        // Сохраняем в БД
                         dbHelper.addUser(username, password, false)
                         dbHelper.close()
 
+                        // Сохраняем в SharedPreferences
                         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit().apply {
                             putString(KEY_USERNAME, username)
@@ -195,13 +222,14 @@ class MainActivity : ComponentActivity() {
                         Toast.makeText(context, "Registration Successful!", Toast.LENGTH_LONG).show()
 
                         val intent = Intent(context, UserActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         context.startActivity(intent)
 
                     } else {
-                        // Логин - проверяем в базе данных
+                        // ВХОД
                         val dbHelper = UsersDbHelper(context)
 
-                        // Проверяем админа (хардкод)
+                        // Проверяем админа (hardcoded)
                         if (username == "admin123" && password == "admin123") {
                             Toast.makeText(context, "Admin Login Successful!", Toast.LENGTH_SHORT).show()
                             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -213,60 +241,46 @@ class MainActivity : ComponentActivity() {
                             }
                             dbHelper.close()
                             val intent = Intent(context, AdminActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                             context.startActivity(intent)
                             return@Button
                         }
 
                         // Проверяем обычного пользователя в БД
-                        val cursor = dbHelper.getUser(username)
-                        if (cursor != null && cursor.moveToFirst()) {
-                            val passwordColIndex = cursor.getColumnIndex(UsersDbHelper.PASSWORD_COL)
-                            val isAdminColIndex = cursor.getColumnIndex(UsersDbHelper.IS_ADMIN_COL)
+                        if (dbHelper.userExists(username)) {
+                            val cursor = dbHelper.getUser(username)
+                            if (cursor != null && cursor.moveToFirst()) {
+                                val passwordColIndex = cursor.getColumnIndex(UsersDbHelper.PASSWORD_COL)
+                                val isAdminColIndex = cursor.getColumnIndex(UsersDbHelper.IS_ADMIN_COL)
 
-                            if (passwordColIndex >= 0 && isAdminColIndex >= 0) {
-                                val dbPassword = cursor.getString(passwordColIndex)
-                                val isAdmin = cursor.getInt(isAdminColIndex) == 1
+                                if (passwordColIndex >= 0 && isAdminColIndex >= 0) {
+                                    val dbPassword = cursor.getString(passwordColIndex)
+                                    val dbIsAdmin = cursor.getInt(isAdminColIndex) == 1
 
-                                if (password == dbPassword && !isAdmin) {
-                                    // Успешный вход
-                                    Toast.makeText(context, "User Login Successful!", Toast.LENGTH_SHORT).show()
-                                    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                                    prefs.edit().apply {
-                                        putString(KEY_USERNAME, username)
-                                        putString(KEY_PASSWORD, password)
-                                        putBoolean(KEY_IS_ADMIN, false)
-                                        apply()
+                                    if (password == dbPassword && !dbIsAdmin) {
+                                        Toast.makeText(context, "User Login Successful!", Toast.LENGTH_SHORT).show()
+
+                                        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                                        prefs.edit().apply {
+                                            putString(KEY_USERNAME, username)
+                                            putString(KEY_PASSWORD, password)
+                                            putBoolean(KEY_IS_ADMIN, false)
+                                            apply()
+                                        }
+
+                                        cursor.close()
+                                        dbHelper.close()
+
+                                        val intent = Intent(context, UserActivity::class.java)
+                                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                        context.startActivity(intent)
+                                        return@Button
                                     }
-                                    cursor.close()
-                                    dbHelper.close()
-                                    val intent = Intent(context, UserActivity::class.java)
-                                    context.startActivity(intent)
-                                    return@Button
-                                } else {
-                                    Toast.makeText(context, "Invalid password!", Toast.LENGTH_SHORT).show()
-                                    cursor.close()
-                                    dbHelper.close()
-                                    return@Button
                                 }
+                                cursor.close()
                             }
                         }
 
-                        // Если пользователь не найден в БД, проверяем SharedPreferences (для обратной совместимости)
-                        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                        val savedUsername = prefs.getString(KEY_USERNAME, "")
-                        val savedPassword = prefs.getString(KEY_PASSWORD, "")
-                        val isAdmin = prefs.getBoolean(KEY_IS_ADMIN, false)
-
-                        if (savedUsername != null && savedPassword != null &&
-                            username == savedUsername && password == savedPassword && !isAdmin) {
-                            Toast.makeText(context, "User Login Successful!", Toast.LENGTH_SHORT).show()
-                            val intent = Intent(context, UserActivity::class.java)
-                            context.startActivity(intent)
-                            dbHelper.close()
-                            return@Button
-                        }
-
-                        cursor?.close()
                         dbHelper.close()
                         Toast.makeText(context, "Invalid username or password!", Toast.LENGTH_SHORT).show()
                     }
@@ -318,7 +332,7 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "👤 Register as a regular user to view medicines",
+                            text = "👤 Register as a regular user to view dancers",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )

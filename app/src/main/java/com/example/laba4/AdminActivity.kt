@@ -79,55 +79,51 @@ import kotlinx.coroutines.launch
 import java.io.Serializable
 import java.util.UUID
 
-// Data class for Medicines
-data class Medicine(
+// Data class for Dancers
+data class Dancer(
     val id: String = UUID.randomUUID().toString(),
-    var name: String,
-    var price: Double,
-    var quantity: Int,
-    var manufacturer: String,
+    val name: String,
+    val surname: String,
+    val group: String,
+    val role: String,
     var picture: String = R.drawable.no_picture.toString()
 ) : Serializable
 
 class ItemViewModel : ViewModel() {
 
-    private var medicineList = mutableStateListOf(
-        Medicine(name = "Paracetamol", price = 150.0, quantity = 50, manufacturer = "PharmaCo", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Aspirin", price = 200.0, quantity = 30, manufacturer = "MedLife", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Ibuprofen", price = 250.0, quantity = 40, manufacturer = "HealthPlus", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Amoxicillin", price = 350.0, quantity = 20, manufacturer = "BioMed", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Omeprazole", price = 180.0, quantity = 60, manufacturer = "GastroCare", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Loratadine", price = 120.0, quantity = 45, manufacturer = "AllergyRelief", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Metformin", price = 280.0, quantity = 35, manufacturer = "DiabetesCare", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Atorvastatin", price = 400.0, quantity = 25, manufacturer = "HeartHealth", picture = R.drawable.no_picture.toString()),
-        Medicine(name = "Vitamin D", price = 90.0, quantity = 100, manufacturer = "NutriLife", picture = R.drawable.no_picture.toString())
+    private var dancerList = mutableStateListOf(
+        Dancer(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
+        Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
     )
 
-    private val _medicineListFlow = MutableStateFlow(medicineList)
-    val medicineListFlow: StateFlow<List<Medicine>> get() = _medicineListFlow
+    private val _dancerListFlow = MutableStateFlow(dancerList)
+    val dancerListFlow: StateFlow<List<Dancer>> get() = _dancerListFlow
 
     fun clearList() {
-        medicineList.clear()
+        dancerList.clear()
     }
 
     fun changeImage(index: Int, value: String) {
-        medicineList[index] = medicineList[index].copy(picture = value)
+        dancerList[index] = dancerList[index].copy(picture = value)
     }
 
-    fun updateMedicine(index: Int, medicine: Medicine) {
-        medicineList[index] = medicine
+    fun addDancerToHead(dancer: Dancer) {
+        dancerList.add(0, dancer)
     }
 
-    fun addMedicineToHead(medicine: Medicine) {
-        medicineList.add(0, medicine)
+    fun addDancerToEnd(dancer: Dancer) {
+        dancerList.add(dancer)
     }
 
-    fun addMedicineToEnd(medicine: Medicine) {
-        medicineList.add(medicine)
-    }
-
-    fun removeItem(item: Medicine) {
-        medicineList.remove(item)
+    fun removeItem(item: Dancer) {
+        dancerList.remove(item)
     }
 }
 
@@ -137,32 +133,32 @@ class AdminActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dbHelper = MedicinesDbHelper(this)
+        val dbHelper = DancersDbHelper(this)
 
-        if (savedInstanceState != null && savedInstanceState.containsKey("medicines")) {
-            val tempMedicineArray = savedInstanceState.getSerializable("medicines") as ArrayList<Medicine>
+        if (savedInstanceState != null && savedInstanceState.containsKey("dancers")) {
+            val tempDancerArray = savedInstanceState.getSerializable("dancers") as ArrayList<Dancer>
             viewModel.clearList()
-            tempMedicineArray.forEach {
-                viewModel.addMedicineToEnd(it)
+            tempDancerArray.forEach {
+                viewModel.addDancerToEnd(it)
             }
             Toast.makeText(this, "From saved", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "From create", Toast.LENGTH_SHORT).show()
             if (dbHelper.isEmpty()) {
                 println("DB is empty")
-                var tempMedicineArray = ArrayList<Medicine>()
-                viewModel.medicineListFlow.value.forEach {
-                    tempMedicineArray.add(it)
+                var tempDancerArray = ArrayList<Dancer>()
+                viewModel.dancerListFlow.value.forEach {
+                    tempDancerArray.add(it)
                 }
-                dbHelper.addArrayToDB(tempMedicineArray)
+                dbHelper.addArrayToDB(tempDancerArray)
                 dbHelper.printDB()
             } else {
                 println("DB has records")
                 dbHelper.printDB()
-                val tempMedicineArray = dbHelper.getMedicinesArray()
+                val tempDancerArray = dbHelper.getDancersArray()
                 viewModel.clearList()
-                tempMedicineArray.forEach {
-                    viewModel.addMedicineToEnd(it)
+                tempDancerArray.forEach {
+                    viewModel.addDancerToEnd(it)
                 }
             }
         }
@@ -184,25 +180,25 @@ class AdminActivity : ComponentActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         Toast.makeText(this, "saved", Toast.LENGTH_SHORT).show()
-        var tempMedicineArray = ArrayList<Medicine>()
-        viewModel.medicineListFlow.value.forEach {
-            tempMedicineArray.add(it)
+        var tempDancerArray = ArrayList<Dancer>()
+        viewModel.dancerListFlow.value.forEach {
+            tempDancerArray.add(it)
         }
-        outState.putSerializable("medicines", tempMedicineArray)
+        outState.putSerializable("dancers", tempDancerArray)
         super.onSaveInstanceState(outState)
     }
 
-    class MedicinesDbHelper(context: Context) :
+    class DancersDbHelper(context: Context) :
         SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
         companion object {
-            private val DATABASE_NAME = "MEDICINES"
+            private val DATABASE_NAME = "DANCERS"
             private val DATABASE_VERSION = 1
-            val TABLE_NAME = "medicines_table"
+            val TABLE_NAME = "dancers_table"
             val ID_COL = "id"
-            val NAME_COL = "medicine_name"
-            val PRICE_COL = "price"
-            val QUANTITY_COL = "quantity"
-            val MANUFACTURER_COL = "manufacturer"
+            val NAME_COL = "dancer_name"
+            val SURNAME_COL = "dancer_surname"
+            val GROUP_COL = "dancer_group"
+            val ROLE_COL = "dancer_role"
             val PICTURE_COL = "picture"
         }
 
@@ -210,9 +206,9 @@ class AdminActivity : ComponentActivity() {
             val query = ("CREATE TABLE " + TABLE_NAME + " (" +
                     ID_COL + " TEXT PRIMARY KEY, " +
                     NAME_COL + " TEXT, " +
-                    PRICE_COL + " REAL, " +
-                    QUANTITY_COL + " INTEGER, " +
-                    MANUFACTURER_COL + " TEXT, " +
+                    SURNAME_COL + " TEXT, " +
+                    GROUP_COL + " TEXT, " +
+                    ROLE_COL + " TEXT, " +
                     PICTURE_COL + " TEXT)")
             db.execSQL(query)
         }
@@ -237,90 +233,77 @@ class AdminActivity : ComponentActivity() {
             if (!isEmpty()) {
                 cursor.moveToFirst()
                 val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val priceColIndex = cursor.getColumnIndex(PRICE_COL)
+                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
                 do {
                     print("${cursor.getString(nameColIndex)} ")
-                    print("${cursor.getDouble(priceColIndex)} ")
+                    print("${cursor.getString(surnameColIndex)} ")
                 } while (cursor.moveToNext())
             } else println("DB is empty")
         }
 
-        fun addArrayToDB(medicines: ArrayList<Medicine>) {
-            medicines.forEach {
-                addMedicine(it)
+        fun addArrayToDB(dancers: ArrayList<Dancer>) {
+            dancers.forEach {
+                addDancer(it)
             }
         }
 
-        fun addMedicine(medicine: Medicine) {
+        fun addDancer(dancer: Dancer) {
             val values = ContentValues()
-            values.put(ID_COL, medicine.id)
-            values.put(NAME_COL, medicine.name)
-            values.put(PRICE_COL, medicine.price)
-            values.put(QUANTITY_COL, medicine.quantity)
-            values.put(MANUFACTURER_COL, medicine.manufacturer)
-            values.put(PICTURE_COL, medicine.picture)
+            values.put(ID_COL, dancer.id)
+            values.put(NAME_COL, dancer.name)
+            values.put(SURNAME_COL, dancer.surname)
+            values.put(GROUP_COL, dancer.group)
+            values.put(ROLE_COL, dancer.role)
+            values.put(PICTURE_COL, dancer.picture)
 
             val db = this.writableDatabase
             db.insert(TABLE_NAME, null, values)
             db.close()
         }
 
-        fun updateMedicine(medicine: Medicine) {
+        fun deleteDancer(dancer: Dancer) {
             val db = this.writableDatabase
-            val values = ContentValues()
-            values.put(NAME_COL, medicine.name)
-            values.put(PRICE_COL, medicine.price)
-            values.put(QUANTITY_COL, medicine.quantity)
-            values.put(MANUFACTURER_COL, medicine.manufacturer)
-            values.put(PICTURE_COL, medicine.picture)
-
-            db.update(TABLE_NAME, values, "$ID_COL = ?", arrayOf(medicine.id))
+            db.delete(TABLE_NAME, "$ID_COL = ?", arrayOf(dancer.id))
             db.close()
         }
 
-        fun deleteMedicine(medicine: Medicine) {
-            val db = this.writableDatabase
-            db.delete(TABLE_NAME, "$ID_COL = ?", arrayOf(medicine.id))
-            db.close()
-        }
-
-        fun changeImgForMedicine(name: String, img: String) {
+        fun changeImgForDancer(name: String, surname: String, img: String) {
             val db = this.writableDatabase
             val values = ContentValues()
             values.put(PICTURE_COL, img)
-            db.update(TABLE_NAME, values, "$NAME_COL = ?", arrayOf(name))
+            db.update(TABLE_NAME, values, "$NAME_COL = ? AND $SURNAME_COL = ?", arrayOf(name, surname))
             db.close()
         }
 
-        fun getMedicinesArray(): ArrayList<Medicine> {
-            var medicinesArray = ArrayList<Medicine>()
+        fun getDancersArray(): ArrayList<Dancer> {
+            var dancersArray = ArrayList<Dancer>()
             val cursor = getCursor()
             if (!isEmpty()) {
                 cursor.moveToFirst()
                 val idColIndex = cursor.getColumnIndex(ID_COL)
                 val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val priceColIndex = cursor.getColumnIndex(PRICE_COL)
-                val quantityColIndex = cursor.getColumnIndex(QUANTITY_COL)
-                val manufacturerColIndex = cursor.getColumnIndex(MANUFACTURER_COL)
+                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
+                val groupColIndex = cursor.getColumnIndex(GROUP_COL)
+                val roleColIndex = cursor.getColumnIndex(ROLE_COL)
                 val pictureColIndex = cursor.getColumnIndex(PICTURE_COL)
 
                 do {
                     val id = cursor.getString(idColIndex)
                     val name = cursor.getString(nameColIndex)
-                    val price = cursor.getDouble(priceColIndex)
-                    val quantity = cursor.getInt(quantityColIndex)
-                    val manufacturer = cursor.getString(manufacturerColIndex)
+                    val surname = cursor.getString(surnameColIndex)
+                    val group = cursor.getString(groupColIndex)
+                    val role = cursor.getString(roleColIndex)
                     val picture = cursor.getString(pictureColIndex)
-                    medicinesArray.add(Medicine(id, name, price, quantity, manufacturer, picture))
+                    dancersArray.add(Dancer(id, name, surname, group, role, picture))
                 } while (cursor.moveToNext())
             } else println("DB is empty")
-            return medicinesArray
+            return dancersArray
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MakeAppBar(model: ItemViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
+    fun MakeAppBar(model: ItemViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
         var mDisplayMenu by remember { mutableStateOf(false) }
         val mContext = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
@@ -329,10 +312,10 @@ class AdminActivity : ComponentActivity() {
         val startForResult =
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == RESULT_OK) {
-                    val newMedicine = result.data?.getSerializableExtra("newItem") as Medicine
-                    println("new medicine name = ${newMedicine.name}")
-                    model.addMedicineToHead(newMedicine)
-                    dbHelper.addMedicine(newMedicine)
+                    val newDancer = result.data?.getSerializableExtra("newItem") as Dancer
+                    println("new dancer name = ${newDancer.name}")
+                    model.addDancerToHead(newDancer)
+                    dbHelper.addDancer(newDancer)
                     scope.launch {
                         lazyListState.scrollToItem(0)
                     }
@@ -343,7 +326,7 @@ class AdminActivity : ComponentActivity() {
             MakeAlertDialog(context = mContext, dialogTitle = "About", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Medicines App") },
+            title = { Text("Dancers App") },
             actions = {
                 IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
                     Text("☰")
@@ -361,9 +344,9 @@ class AdminActivity : ComponentActivity() {
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Add Medicine") },
+                        text = { Text(text = "Add Dancer") },
                         onClick = {
-                            Toast.makeText(mContext, "Add Medicine", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(mContext, "Add Dancer", Toast.LENGTH_SHORT).show()
                             val newAct = Intent(mContext, InputActivity::class.java)
                             startForResult.launch(newAct)
                             mDisplayMenu = !mDisplayMenu
@@ -396,18 +379,18 @@ class AdminActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: MedicinesDbHelper) {
-        val medicineListState = viewModel.medicineListFlow.collectAsState()
+    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
+        val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize().background(Color.White),
             state = lazyListState
         ) {
             items(
-                items = viewModel.medicineListFlow.value,
+                items = viewModel.dancerListFlow.value,
                 key = { it.id }
             ) { item ->
-                ListRow(item, medicineListState.value, viewModel, dbHelper)
+                ListRow(item, dancerListState.value, viewModel, dbHelper)
             }
         }
     }
@@ -431,122 +414,19 @@ class AdminActivity : ComponentActivity() {
         )
     }
 
-    @Composable
-    fun EditMedicineDialog(
-        medicine: Medicine,
-        index: Int,
-        viewModel: ItemViewModel,
-        dbHelper: MedicinesDbHelper,
-        context: Context,
-        onDismiss: () -> Unit
-    ) {
-        var name by remember { mutableStateOf(medicine.name) }
-        var price by remember { mutableStateOf(medicine.price.toString()) }
-        var quantity by remember { mutableStateOf(medicine.quantity.toString()) }
-        var manufacturer by remember { mutableStateOf(medicine.manufacturer) }
-
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            title = { Text("Edit Medicine", fontSize = 24.sp, fontWeight = FontWeight.Bold) },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TextField(
-                        value = price,
-                        onValueChange = { price = it },
-                        label = { Text("Price") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TextField(
-                        value = quantity,
-                        onValueChange = { quantity = it },
-                        label = { Text("Quantity") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    TextField(
-                        value = manufacturer,
-                        onValueChange = { manufacturer = it },
-                        label = { Text("Manufacturer") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val priceDouble = price.toDoubleOrNull() ?: 0.0
-                        val quantityInt = quantity.toIntOrNull() ?: 0
-
-                        if (name.isNotEmpty() && priceDouble > 0 && quantityInt > 0 && manufacturer.isNotEmpty()) {
-                            val updatedMedicine = medicine.copy(
-                                name = name,
-                                price = priceDouble,
-                                quantity = quantityInt,
-                                manufacturer = manufacturer
-                            )
-                            viewModel.updateMedicine(index, updatedMedicine)
-                            dbHelper.updateMedicine(updatedMedicine)
-                            Toast.makeText(context, "Medicine updated!", Toast.LENGTH_SHORT).show()
-                            onDismiss()
-                        } else {
-                            Toast.makeText(context, "Please fill all fields correctly!", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    )
-                ) {
-                    Text("Save", color = Color.White)
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = onDismiss,
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray
-                    )
-                ) {
-                    Text("Cancel", color = Color.White)
-                }
-            }
-        )
-    }
-
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListRow(
-        model: Medicine,
-        medicineListState: List<Medicine>,
+        model: Dancer,
+        dancerListState: List<Dancer>,
         viewModel: ItemViewModel,
-        dbHelper: MedicinesDbHelper
+        dbHelper: DancersDbHelper
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
-        val openEditDialog = remember { mutableStateOf(false) }
-        var medicineSelected = remember { mutableStateOf("") }
-        val index = medicineListState.indexOf(model)
+        var dancerSelected = remember { mutableStateOf("") }
 
-        if (openDialog.value) MakeAlertDialog(context, medicineSelected.value, openDialog)
-
-        if (openEditDialog.value) {
-            EditMedicineDialog(
-                medicine = model,
-                index = index,
-                viewModel = viewModel,
-                dbHelper = dbHelper,
-                context = context,
-                onDismiss = { openEditDialog.value = false }
-            )
-        }
+        if (openDialog.value) MakeAlertDialog(context, dancerSelected.value, openDialog)
 
         var mDisplayMenu by remember { mutableStateOf(false) }
 
@@ -560,9 +440,9 @@ class AdminActivity : ComponentActivity() {
                 context.contentResolver.takePersistableUriPermission(
                     imgURI, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                val index = medicineListState.indexOf(model)
+                val index = dancerListState.indexOf(model)
                 viewModel.changeImage(index, imgURI.toString())
-                dbHelper.changeImgForMedicine(model.name, imgURI.toString())
+                dbHelper.changeImgForDancer(model.name, model.surname, imgURI.toString())
             }
         }
 
@@ -575,9 +455,9 @@ class AdminActivity : ComponentActivity() {
                 .border(BorderStroke(2.dp, Color.Red))
                 .combinedClickable(
                     onClick = {
-                        println("item = ${model.name}")
-                        medicineSelected.value = model.name
-                        Toast.makeText(context, "item = ${model.name}", Toast.LENGTH_LONG).show()
+                        println("item = ${model.name} ${model.surname}")
+                        dancerSelected.value = "${model.name} ${model.surname}"
+                        Toast.makeText(context, "item = ${model.name} ${model.surname}", Toast.LENGTH_LONG).show()
                         openDialog.value = true
                     },
                     onLongClick = {
@@ -591,14 +471,14 @@ class AdminActivity : ComponentActivity() {
             ) {
                 Column {
                     Text(
-                        text = model.name,
+                        text = "${model.name} ${model.surname}",
                         fontSize = 19.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(start = 18.dp),
                         color = Color.Black
                     )
                     Text(
-                        text = "Price: $${model.price}",
+                        text = "Группа: ${model.group}",
                         fontSize = 16.sp,
                         modifier = Modifier.padding(10.dp),
                         fontStyle = FontStyle.Italic,
@@ -607,16 +487,9 @@ class AdminActivity : ComponentActivity() {
                 }
                 Column {
                     Text(
-                        text = "Qty: ${model.quantity}",
+                        text = "Роль: ${model.role}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(10.dp),
-                        fontStyle = FontStyle.Italic,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = model.manufacturer,
-                        fontSize = 16.sp,
                         modifier = Modifier.padding(10.dp),
                         fontStyle = FontStyle.Italic,
                         color = Color.Black
@@ -627,19 +500,6 @@ class AdminActivity : ComponentActivity() {
                     expanded = mDisplayMenu,
                     onDismissRequest = { mDisplayMenu = false }
                 ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "Edit Medicine",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                        },
-                        onClick = {
-                            mDisplayMenu = !mDisplayMenu
-                            openEditDialog.value = true
-                        }
-                    )
                     DropdownMenuItem(
                         text = {
                             Text(
@@ -671,14 +531,14 @@ class AdminActivity : ComponentActivity() {
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "Delete Medicine",
+                                text = "Delete Dancer",
                                 fontSize = 20.sp,
                             )
                         },
                         onClick = {
                             mDisplayMenu = !mDisplayMenu
                             viewModel.removeItem(model)
-                            dbHelper.deleteMedicine(model)
+                            dbHelper.deleteDancer(model)
                         }
                     )
                 }
@@ -704,10 +564,10 @@ class AdminActivity : ComponentActivity() {
 
     @Composable
     fun MakeInputPart(model: ItemViewModel, lazyListState: LazyListState) {
-        var medicineName by remember { mutableStateOf("") }
-        var medicinePrice by remember { mutableStateOf(0.0) }
-        var medicineQuantity by remember { mutableStateOf(0) }
-        var medicineManufacturer by remember { mutableStateOf("") }
+        var dancerName by remember { mutableStateOf("") }
+        var dancerSurname by remember { mutableStateOf("") }
+        var dancerGroup by remember { mutableStateOf("") }
+        var dancerRole by remember { mutableStateOf("") }
 
         val scope = rememberCoroutineScope()
 
@@ -721,20 +581,17 @@ class AdminActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TextField(
-                    value = medicineName,
-                    onValueChange = { newText -> medicineName = newText },
+                    value = dancerName,
+                    onValueChange = { newText -> dancerName = newText },
                     textStyle = TextStyle(fontSize = 20.sp),
-                    label = { Text("Medicine Name") },
+                    label = { Text("Имя") },
                     modifier = Modifier.weight(1f)
                 )
                 TextField(
-                    value = if (medicinePrice == 0.0) "" else medicinePrice.toString(),
-                    onValueChange = { newText ->
-                        medicinePrice = if (newText != "") newText.toDoubleOrNull() ?: 0.0 else 0.0
-                    },
+                    value = dancerSurname,
+                    onValueChange = { newText -> dancerSurname = newText },
                     textStyle = TextStyle(fontSize = 20.sp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    label = { Text("Price") },
+                    label = { Text("Фамилия") },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -744,41 +601,37 @@ class AdminActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 TextField(
-                    value = if (medicineQuantity == 0) "" else medicineQuantity.toString(),
-                    onValueChange = { newText ->
-                        medicineQuantity = if (newText != "") newText.toIntOrNull() ?: 0 else 0
-                    },
+                    value = dancerGroup,
+                    onValueChange = { newText -> dancerGroup = newText },
                     textStyle = TextStyle(fontSize = 20.sp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    label = { Text("Quantity") },
+                    label = { Text("Группа") },
                     modifier = Modifier.weight(1f)
                 )
                 TextField(
-                    value = medicineManufacturer,
-                    onValueChange = { newText -> medicineManufacturer = newText },
+                    value = dancerRole,
+                    onValueChange = { newText -> dancerRole = newText },
                     textStyle = TextStyle(fontSize = 20.sp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    label = { Text("Manufacturer") },
+                    label = { Text("Роль") },
                     modifier = Modifier.weight(1f)
                 )
             }
             Button(
                 onClick = {
-                    println("added $medicineName $medicinePrice $medicineQuantity $medicineManufacturer")
-                    val newMedicine = Medicine(
-                        name = medicineName,
-                        price = medicinePrice,
-                        quantity = medicineQuantity,
-                        manufacturer = medicineManufacturer
+                    println("added $dancerName $dancerSurname $dancerGroup $dancerRole")
+                    val newDancer = Dancer(
+                        name = dancerName,
+                        surname = dancerSurname,
+                        group = dancerGroup,
+                        role = dancerRole
                     )
-                    model.addMedicineToHead(newMedicine)
+                    model.addDancerToHead(newDancer)
                     scope.launch {
                         lazyListState.scrollToItem(0)
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Add Medicine")
+                Text("Add Dancer")
             }
         }
     }
