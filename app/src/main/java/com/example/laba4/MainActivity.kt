@@ -127,7 +127,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = if (isRegistering) "Create Account" else "Dancers App Login",
+                text = if (isRegistering) "Create Account" else "Приложение танцоров Ансамбля \"Кавказ\"",
                 style = TextStyle(
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
@@ -177,11 +177,6 @@ class MainActivity : ComponentActivity() {
             Button(
                 onClick = {
                     if (isRegistering) {
-                        if (username == "admin123") {
-                            Toast.makeText(context, "Username 'admin123' is reserved for admin", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
-
                         if (password != confirmPassword) {
                             Toast.makeText(context, "Passwords do not match!", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -278,7 +273,7 @@ class MainActivity : ComponentActivity() {
                     .height(56.dp)
             ) {
                 Text(
-                    text = if (isRegistering) "Register" else "Login",
+                    text = if (isRegistering) "Регистрация" else "Логин",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -299,8 +294,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isRegistering) "Already have an account? Login"
-                        else "Don't have an account? Register",
+                        text = if (isRegistering) "Есть аккаунт? Войди"
+                        else "Че нет аккаунта??",
                         fontSize = 16.sp
                     )
                 }
