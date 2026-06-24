@@ -37,7 +37,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -66,7 +65,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -134,12 +132,13 @@ class ItemViewModel : ViewModel() {
 class AdminActivity : ComponentActivity() {
 
     private val viewModel = ItemViewModel()
+    private lateinit var dbHelper: DancersDbHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dbHelper = DancersDbHelper(this)
+        dbHelper = DancersDbHelper(this)
 
-        loadDancersFromDb(dbHelper)
+        loadDancersFromDb()
 
         setContent {
             val lazyListState = rememberLazyListState()
@@ -149,22 +148,22 @@ class AdminActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column(Modifier.fillMaxSize()) {
-                        MakeAppBar(viewModel, lazyListState, dbHelper)
+                        MakeAppBar(viewModel, lazyListState)
                     }
                 }
             }
         }
     }
 
-    private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
+    private fun loadDancersFromDb() {
         if (dbHelper.isEmpty()) {
             val defaultDancers = listOf(
-                Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
-                Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
-                Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор"),
-                Dancer(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор"),
-                Dancer(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор"),
-                Dancer(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор")
+                Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор", picture = R.drawable.arina.toString()),
+                Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор", picture = R.drawable.aisha.toString()),
+                Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор", picture = R.drawable.ramil.toString()),
+                Dancer(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор", picture = R.drawable.ruslan.toString()),
+                Dancer(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор", picture = R.drawable.vadim.toString()),
+                Dancer(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор", picture = R.drawable.kadir.toString())
             )
             dbHelper.addArrayToDB(ArrayList(defaultDancers))
             viewModel.setDancers(defaultDancers)
@@ -174,7 +173,7 @@ class AdminActivity : ComponentActivity() {
         }
     }
 
-    private fun refreshDancersFromDb(dbHelper: DancersDbHelper) {
+    private fun refreshDancersFromDb() {
         val tempDancerArray = dbHelper.getDancersArray()
         viewModel.setDancers(tempDancerArray)
     }
@@ -226,19 +225,6 @@ class AdminActivity : ComponentActivity() {
         fun isEmpty(): Boolean {
             val cursor = getCursor()
             return !cursor.moveToFirst()
-        }
-
-        fun printDB() {
-            val cursor = getCursor()
-            if (!isEmpty()) {
-                cursor.moveToFirst()
-                val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
-                do {
-                    print("${cursor.getString(nameColIndex)} ")
-                    print("${cursor.getString(surnameColIndex)} ")
-                } while (cursor.moveToNext())
-            } else println("DB is empty")
         }
 
         fun addArrayToDB(dancers: ArrayList<Dancer>) {
@@ -309,14 +295,14 @@ class AdminActivity : ComponentActivity() {
                     val picture = cursor.getString(pictureColIndex)
                     dancersArray.add(Dancer(id, name, surname, group, role, picture))
                 } while (cursor.moveToNext())
-            } else println("DB is empty")
+            }
             return dancersArray
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MakeAppBar(model: ItemViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
+    fun MakeAppBar(model: ItemViewModel, lazyListState: LazyListState) {
         var mDisplayMenu by remember { mutableStateOf(false) }
         val mContext = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
@@ -331,7 +317,7 @@ class AdminActivity : ComponentActivity() {
                     scope.launch {
                         lazyListState.scrollToItem(0)
                     }
-                    refreshDancersFromDb(dbHelper)
+                    refreshDancersFromDb()
                 }
             }
 
@@ -385,12 +371,12 @@ class AdminActivity : ComponentActivity() {
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            MakeList(viewModel = model, lazyListState, dbHelper)
+            MakeList(viewModel = model, lazyListState)
         }
     }
 
     @Composable
-    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
+    fun MakeList(viewModel: ItemViewModel, lazyListState: LazyListState) {
         val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -401,7 +387,7 @@ class AdminActivity : ComponentActivity() {
                 items = viewModel.dancerListFlow.value,
                 key = { it.id }
             ) { item ->
-                ListRow(item, dancerListState.value, viewModel, dbHelper)
+                ListRow(item, dancerListState.value, viewModel)
             }
         }
     }
@@ -488,13 +474,16 @@ class AdminActivity : ComponentActivity() {
         )
     }
 
+    fun pictureIsInt(picture: String): Boolean {
+        return picture.toIntOrNull() != null
+    }
+
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListRow(
         model: Dancer,
         dancerListState: List<Dancer>,
-        viewModel: ItemViewModel,
-        dbHelper: DancersDbHelper
+        viewModel: ItemViewModel
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
@@ -511,14 +500,30 @@ class AdminActivity : ComponentActivity() {
         ) { res ->
             if (res.data?.data != null) {
                 val imgURI = res.data?.data!!
+                println("image uri = $imgURI")
 
-                context.contentResolver.takePersistableUriPermission(
-                    imgURI, Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        imgURI, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
                 val index = dancerListState.indexOf(model)
                 viewModel.changeImage(index, imgURI.toString())
                 dbHelper.changeImgForDancer(model.name, model.surname, imgURI.toString())
-                refreshDancersFromDb(dbHelper)
+                refreshDancersFromDb()
+                Toast.makeText(context, "Фото обновлено!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        fun getPictureFromDrawable(name: String): Int {
+            return try {
+                val field = R.drawable::class.java.getField(name.lowercase())
+                field.getInt(null)
+            } catch (e: Exception) {
+                R.drawable.no_picture
             }
         }
 
@@ -572,8 +577,16 @@ class AdminActivity : ComponentActivity() {
                 }
 
                 Image(
-                    painter = if (pictureIsInt(model.picture)) painterResource(model.picture.toInt())
-                    else rememberImagePainter(model.picture),
+                    painter = if (pictureIsInt(model.picture)) {
+                        painterResource(model.picture.toInt())
+                    } else {
+                        val resId = getPictureFromDrawable(model.name)
+                        if (resId != R.drawable.no_picture) {
+                            painterResource(resId)
+                        } else {
+                            rememberImagePainter(model.picture)
+                        }
+                    },
                     contentDescription = "",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.size(60.dp)
@@ -622,7 +635,8 @@ class AdminActivity : ComponentActivity() {
                         mDisplayMenu = false
                         viewModel.removeItem(model)
                         dbHelper.deleteDancer(model)
-                        refreshDancersFromDb(dbHelper)
+                        refreshDancersFromDb()
+                        Toast.makeText(context, "Танцор удален!", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -640,19 +654,10 @@ class AdminActivity : ComponentActivity() {
                     dbHelper.updateDancer(updatedDancer)
                     showEditDialog = false
                     Toast.makeText(context, "Танцор обновлен!", Toast.LENGTH_SHORT).show()
-                    refreshDancersFromDb(dbHelper)
+                    refreshDancersFromDb()
                 }
             )
         }
-    }
-
-    fun pictureIsInt(picture: String): Boolean {
-        var data = try {
-            picture.toInt()
-        } catch (e: NumberFormatException) {
-            null
-        }
-        return data != null
     }
 
     @Composable
