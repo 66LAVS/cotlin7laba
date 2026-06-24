@@ -75,23 +75,7 @@ data class DancerUser(
 
 class UserViewModel : ViewModel() {
 
-    private var dancerList = mutableStateListOf(
-        DancerUser(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        DancerUser(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
-    )
+    private var dancerList = mutableStateListOf<DancerUser>()
 
     private val _dancerListFlow = MutableStateFlow(dancerList)
     val dancerListFlow: StateFlow<List<DancerUser>> get() = _dancerListFlow
@@ -103,6 +87,11 @@ class UserViewModel : ViewModel() {
     fun addDancerToEnd(dancer: DancerUser) {
         dancerList.add(dancer)
     }
+
+    fun setDancers(dancers: List<DancerUser>) {
+        dancerList.clear()
+        dancerList.addAll(dancers)
+    }
 }
 
 class UserActivity : ComponentActivity() {
@@ -112,35 +101,10 @@ class UserActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val dbHelper = UserDancersDbHelper(this)
+        // Используем ту же БД, что и админ
+        val dbHelper = DancersDbHelper(this)
 
-        if (savedInstanceState != null && savedInstanceState.containsKey("dancers")) {
-            val tempDancerArray = savedInstanceState.getSerializable("dancers") as ArrayList<DancerUser>
-            viewModel.clearList()
-            tempDancerArray.forEach {
-                viewModel.addDancerToEnd(it)
-            }
-            Toast.makeText(this, "From saved", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Loading dancers...", Toast.LENGTH_SHORT).show()
-            if (dbHelper.isEmpty()) {
-                println("DB is empty")
-                var tempDancerArray = ArrayList<DancerUser>()
-                viewModel.dancerListFlow.value.forEach {
-                    tempDancerArray.add(it)
-                }
-                dbHelper.addArrayToDB(tempDancerArray)
-                dbHelper.printDB()
-            } else {
-                println("DB has records")
-                dbHelper.printDB()
-                val tempDancerArray = dbHelper.getDancersArray()
-                viewModel.clearList()
-                tempDancerArray.forEach {
-                    viewModel.addDancerToEnd(it)
-                }
-            }
-        }
+        loadDancersFromDb(dbHelper)
 
         setContent {
             val lazyListState = rememberLazyListState()
@@ -157,6 +121,45 @@ class UserActivity : ComponentActivity() {
         }
     }
 
+    private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
+        if (dbHelper.isEmpty()) {
+            val defaultDancers = listOf(
+                DancerUser(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист"),
+                DancerUser(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор"),
+                DancerUser(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель"),
+                DancerUser(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист"),
+                DancerUser(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор"),
+                DancerUser(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор"),
+                DancerUser(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель"),
+                DancerUser(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист"),
+                DancerUser(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор"),
+                DancerUser(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
+                DancerUser(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
+                DancerUser(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор"),
+                DancerUser(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор"),
+                DancerUser(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор"),
+                DancerUser(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор")
+            )
+            dbHelper.addArrayToDB(ArrayList(defaultDancers.map {
+                Dancer(it.id, it.name, it.surname, it.group, it.role, it.picture)
+            }))
+            viewModel.setDancers(defaultDancers)
+        } else {
+            val tempDancerArray = dbHelper.getDancersArray()
+            viewModel.clearList()
+            tempDancerArray.forEach {
+                viewModel.addDancerToEnd(DancerUser(it.id, it.name, it.surname, it.group, it.role, it.picture))
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Обновляем список при возврате на экран
+        val dbHelper = DancersDbHelper(this)
+        loadDancersFromDb(dbHelper)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         var tempDancerArray = ArrayList<DancerUser>()
         viewModel.dancerListFlow.value.forEach {
@@ -166,10 +169,11 @@ class UserActivity : ComponentActivity() {
         super.onSaveInstanceState(outState)
     }
 
-    class UserDancersDbHelper(context: Context) :
+    // Используем общий класс DbHelper
+    class DancersDbHelper(context: Context) :
         SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
         companion object {
-            private val DATABASE_NAME = "DANCERS_USER"
+            private val DATABASE_NAME = "DANCERS"
             private val DATABASE_VERSION = 1
             val TABLE_NAME = "dancers_table"
             val ID_COL = "id"
@@ -206,26 +210,13 @@ class UserActivity : ComponentActivity() {
             return !cursor.moveToFirst()
         }
 
-        fun printDB() {
-            val cursor = getCursor()
-            if (!isEmpty()) {
-                cursor.moveToFirst()
-                val nameColIndex = cursor.getColumnIndex(NAME_COL)
-                val surnameColIndex = cursor.getColumnIndex(SURNAME_COL)
-                do {
-                    print("${cursor.getString(nameColIndex)} ")
-                    print("${cursor.getString(surnameColIndex)} ")
-                } while (cursor.moveToNext())
-            } else println("DB is empty")
-        }
-
-        fun addArrayToDB(dancers: ArrayList<DancerUser>) {
+        fun addArrayToDB(dancers: ArrayList<Dancer>) {
             dancers.forEach {
                 addDancer(it)
             }
         }
 
-        fun addDancer(dancer: DancerUser) {
+        fun addDancer(dancer: Dancer) {
             val values = ContentValues()
             values.put(ID_COL, dancer.id)
             values.put(NAME_COL, dancer.name)
@@ -239,8 +230,8 @@ class UserActivity : ComponentActivity() {
             db.close()
         }
 
-        fun getDancersArray(): ArrayList<DancerUser> {
-            var dancersArray = ArrayList<DancerUser>()
+        fun getDancersArray(): ArrayList<Dancer> {
+            var dancersArray = ArrayList<Dancer>()
             val cursor = getCursor()
             if (!isEmpty()) {
                 cursor.moveToFirst()
@@ -258,31 +249,29 @@ class UserActivity : ComponentActivity() {
                     val group = cursor.getString(groupColIndex)
                     val role = cursor.getString(roleColIndex)
                     val picture = cursor.getString(pictureColIndex)
-                    dancersArray.add(DancerUser(id, name, surname, group, role, picture))
+                    dancersArray.add(Dancer(id, name, surname, group, role, picture))
                 } while (cursor.moveToNext())
-            } else println("DB is empty")
+            }
             return dancersArray
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: UserDancersDbHelper) {
+    fun MakeUserAppBar(model: UserViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
         val mContext = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
 
         if (openDialog.value)
-            MakeUserAlertDialog(context = mContext, dialogTitle = "Dancer Details", openDialog = openDialog)
+            MakeUserAlertDialog(context = mContext, dialogTitle = "Информация о танцоре", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Dancers Catalog") },
+            title = { Text("Танцоры") },
             actions = {
                 Button(
                     onClick = {
                         val prefs = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                         prefs.edit().clear().apply()
-
-                        Toast.makeText(mContext, "Logged out successfully", Toast.LENGTH_SHORT).show()
 
                         val intent = Intent(mContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -311,7 +300,7 @@ class UserActivity : ComponentActivity() {
     }
 
     @Composable
-    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: UserDancersDbHelper) {
+    fun MakeUserList(viewModel: UserViewModel, lazyListState: LazyListState, dbHelper: DancersDbHelper) {
         val dancerListState = viewModel.dancerListFlow.collectAsState()
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -329,17 +318,10 @@ class UserActivity : ComponentActivity() {
 
     @Composable
     fun MakeUserAlertDialog(context: Context, dialogTitle: String, openDialog: MutableState<Boolean>) {
-        var strValue = remember { mutableStateOf("") }
-        val strId = context.resources.getIdentifier(dialogTitle, "string", context.packageName)
-        try {
-            if (strId != 0) strValue.value = context.getString(strId)
-        } catch (e: Resources.NotFoundException) {
-            // Handle missing resource
-        }
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
             title = { Text(text = dialogTitle) },
-            text = { Text(text = strValue.value, fontSize = 20.sp) },
+            text = { Text(text = "Информация о танцоре", fontSize = 20.sp) },
             confirmButton = {
                 Button(onClick = { openDialog.value = false }) { Text(text = "OK") }
             }
@@ -351,7 +333,7 @@ class UserActivity : ComponentActivity() {
         model: DancerUser,
         dancerListState: List<DancerUser>,
         viewModel: UserViewModel,
-        dbHelper: UserDancersDbHelper
+        dbHelper: DancersDbHelper
     ) {
         val context = LocalContext.current
         val openDialog = remember { mutableStateOf(false) }
@@ -369,14 +351,10 @@ class UserActivity : ComponentActivity() {
                 .padding(8.dp)
                 .combinedClickable(
                     onClick = {
-                        println("Viewing dancer: ${model.name} ${model.surname}")
-                        dancerSelected.value = "${model.name} ${model.surname}"
-                        Toast.makeText(context, "Viewing: ${model.name} ${model.surname}", Toast.LENGTH_SHORT).show()
+                        dancerSelected.value = "${model.name} ${model.surname}\nГруппа: ${model.group}\nРоль: ${model.role}"
                         openDialog.value = true
                     },
-                    onLongClick = {
-                        Toast.makeText(context, "View only mode", Toast.LENGTH_SHORT).show()
-                    }
+                    onLongClick = {}
                 )
         ) {
             Row(

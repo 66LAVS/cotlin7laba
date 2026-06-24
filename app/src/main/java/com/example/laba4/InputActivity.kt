@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -46,39 +48,36 @@ class InputActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MakeInputPart() {
-        var dancerName by remember {
-            mutableStateOf("")
-        }
-        var dancerSurname by remember {
-            mutableStateOf("")
-        }
-        var dancerGroup by remember {
-            mutableStateOf("")
-        }
-        var dancerRole by remember {
-            mutableStateOf("")
-        }
+        var dancerName by remember { mutableStateOf("") }
+        var dancerSurname by remember { mutableStateOf("") }
+        var dancerGroup by remember { mutableStateOf("") }
+        var dancerRole by remember { mutableStateOf("") }
+
+        // Состояние для выпадающего списка ролей
+        var roleExpanded by remember { mutableStateOf(false) }
+
+        // Список ролей (только 3 варианта)
+        val roles = listOf("Солист", "Обычный танцор", "Руководитель")
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(8.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Имя и Фамилия
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 TextField(
                     value = dancerName,
                     onValueChange = { newText ->
                         dancerName = newText
                     },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp
-                    ),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Имя") },
                     modifier = Modifier.weight(2f)
                 )
@@ -88,42 +87,56 @@ class InputActivity : ComponentActivity() {
                     onValueChange = { newText ->
                         dancerSurname = newText
                     },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp
-                    ),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Фамилия") },
                     modifier = Modifier.weight(2f)
                 )
             }
 
+            // Группа (текстовое поле для ручного ввода) и Роль (выпадающий список)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                // Группа - текстовое поле для ручного ввода
                 TextField(
                     value = dancerGroup,
                     onValueChange = { newText ->
                         dancerGroup = newText
                     },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp
-                    ),
+                    textStyle = TextStyle(fontSize = 16.sp),
                     label = { Text("Группа") },
                     modifier = Modifier.weight(2f)
                 )
 
-                TextField(
-                    value = dancerRole,
-                    onValueChange = { newText ->
-                        dancerRole = newText
-                    },
-                    textStyle = TextStyle(
-                        fontSize = 20.sp
-                    ),
-                    label = { Text("Роль (солист/обычный/руководитель)") },
-                    modifier = Modifier.weight(2f)
-                )
+                // Роль - выпадающий список
+                Column(modifier = Modifier.weight(2f)) {
+                    Button(
+                        onClick = { roleExpanded = !roleExpanded },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = if (dancerRole.isNotEmpty()) dancerRole else "Роль",
+                            fontSize = 16.sp
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = roleExpanded,
+                        onDismissRequest = { roleExpanded = false },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        roles.forEach { role ->
+                            DropdownMenuItem(
+                                text = { Text(role, fontSize = 16.sp) },
+                                onClick = {
+                                    dancerRole = role
+                                    roleExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 Button(
                     onClick = {
@@ -146,7 +159,7 @@ class InputActivity : ComponentActivity() {
                     },
                     modifier = Modifier.weight(3f)
                 ) {
-                    Text("Add")
+                    Text("Add", fontSize = 16.sp)
                 }
             }
         }

@@ -90,29 +90,18 @@ data class Dancer(
 
 class ItemViewModel : ViewModel() {
 
-    private var dancerList = mutableStateListOf(
-        Dancer(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор", picture = R.drawable.no_picture.toString()),
-        Dancer(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор", picture = R.drawable.no_picture.toString())
-    )
+    private var dancerList = mutableStateListOf<Dancer>()
 
     private val _dancerListFlow = MutableStateFlow(dancerList)
     val dancerListFlow: StateFlow<List<Dancer>> get() = _dancerListFlow
 
     fun clearList() {
         dancerList.clear()
+    }
+
+    fun setDancers(dancers: List<Dancer>) {
+        dancerList.clear()
+        dancerList.addAll(dancers)
     }
 
     fun changeImage(index: Int, value: String) {
@@ -149,33 +138,7 @@ class AdminActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val dbHelper = DancersDbHelper(this)
 
-        if (savedInstanceState != null && savedInstanceState.containsKey("dancers")) {
-            val tempDancerArray = savedInstanceState.getSerializable("dancers") as ArrayList<Dancer>
-            viewModel.clearList()
-            tempDancerArray.forEach {
-                viewModel.addDancerToEnd(it)
-            }
-            Toast.makeText(this, "From saved", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "From create", Toast.LENGTH_SHORT).show()
-            if (dbHelper.isEmpty()) {
-                println("DB is empty")
-                var tempDancerArray = ArrayList<Dancer>()
-                viewModel.dancerListFlow.value.forEach {
-                    tempDancerArray.add(it)
-                }
-                dbHelper.addArrayToDB(tempDancerArray)
-                dbHelper.printDB()
-            } else {
-                println("DB has records")
-                dbHelper.printDB()
-                val tempDancerArray = dbHelper.getDancersArray()
-                viewModel.clearList()
-                tempDancerArray.forEach {
-                    viewModel.addDancerToEnd(it)
-                }
-            }
-        }
+        loadDancersFromDb(dbHelper)
 
         setContent {
             val lazyListState = rememberLazyListState()
@@ -192,8 +155,39 @@ class AdminActivity : ComponentActivity() {
         }
     }
 
+    private fun loadDancersFromDb(dbHelper: DancersDbHelper) {
+        if (dbHelper.isEmpty()) {
+            val defaultDancers = listOf(
+                Dancer(name = "Анна", surname = "Иванова", group = "Группа А", role = "Солист"),
+                Dancer(name = "Михаил", surname = "Петров", group = "Группа Б", role = "Обычный танцор"),
+                Dancer(name = "Елена", surname = "Сидорова", group = "Группа А", role = "Руководитель"),
+                Dancer(name = "Дмитрий", surname = "Козлов", group = "Группа В", role = "Солист"),
+                Dancer(name = "Ольга", surname = "Смирнова", group = "Группа Б", role = "Обычный танцор"),
+                Dancer(name = "Алексей", surname = "Федоров", group = "Группа А", role = "Обычный танцор"),
+                Dancer(name = "Мария", surname = "Волкова", group = "Группа В", role = "Руководитель"),
+                Dancer(name = "Игорь", surname = "Морозов", group = "Группа Б", role = "Солист"),
+                Dancer(name = "Наталья", surname = "Павлова", group = "Группа А", role = "Обычный танцор"),
+                Dancer(name = "Алина", surname = "Рахматулина", group = "7202", role = "Обычный танцор"),
+                Dancer(name = "Аиша", surname = "Ибрагимова", group = "9505", role = "Обычный танцор"),
+                Dancer(name = "Рамиль", surname = "Овчиева", group = "3302", role = "Обычный танцор"),
+                Dancer(name = "Руслан", surname = "Абдуризэев", group = "7777", role = "Обычный танцор"),
+                Dancer(name = "Вадим", surname = "Демиров", group = "2222", role = "Обычный танцор"),
+                Dancer(name = "Кадир", surname = "Тагиров", group = "1234", role = "Обычный танцор")
+            )
+            dbHelper.addArrayToDB(ArrayList(defaultDancers))
+            viewModel.setDancers(defaultDancers)
+        } else {
+            val tempDancerArray = dbHelper.getDancersArray()
+            viewModel.setDancers(tempDancerArray)
+        }
+    }
+
+    private fun refreshDancersFromDb(dbHelper: DancersDbHelper) {
+        val tempDancerArray = dbHelper.getDancersArray()
+        viewModel.setDancers(tempDancerArray)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
-        Toast.makeText(this, "saved", Toast.LENGTH_SHORT).show()
         var tempDancerArray = ArrayList<Dancer>()
         viewModel.dancerListFlow.value.forEach {
             tempDancerArray.add(it)
@@ -340,12 +334,12 @@ class AdminActivity : ComponentActivity() {
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == RESULT_OK) {
                     val newDancer = result.data?.getSerializableExtra("newItem") as Dancer
-                    println("new dancer name = ${newDancer.name}")
                     model.addDancerToHead(newDancer)
                     dbHelper.addDancer(newDancer)
                     scope.launch {
                         lazyListState.scrollToItem(0)
                     }
+                    refreshDancersFromDb(dbHelper)
                 }
             }
 
@@ -353,7 +347,7 @@ class AdminActivity : ComponentActivity() {
             MakeAlertDialog(context = mContext, dialogTitle = "About", openDialog = openDialog)
 
         TopAppBar(
-            title = { Text("Dancers App") },
+            title = { Text("Админ: Танцоры") },
             actions = {
                 IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
                     Text("☰")
@@ -363,26 +357,23 @@ class AdminActivity : ComponentActivity() {
                     onDismissRequest = { mDisplayMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text(text = "About") },
+                        text = { Text(text = "О нас") },
                         onClick = {
-                            Toast.makeText(mContext, "About", Toast.LENGTH_SHORT).show()
                             mDisplayMenu = !mDisplayMenu
                             openDialog.value = true
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Add Dancer") },
+                        text = { Text(text = "Добавить танцора") },
                         onClick = {
-                            Toast.makeText(mContext, "Add Dancer", Toast.LENGTH_SHORT).show()
                             val newAct = Intent(mContext, InputActivity::class.java)
                             startForResult.launch(newAct)
                             mDisplayMenu = !mDisplayMenu
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text(text = "Logout") },
+                        text = { Text(text = "Выйти") },
                         onClick = {
-                            Toast.makeText(mContext, "Logging out...", Toast.LENGTH_SHORT).show()
                             val prefs = mContext.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
                             prefs.edit().clear().apply()
 
@@ -425,19 +416,82 @@ class AdminActivity : ComponentActivity() {
 
     @Composable
     fun MakeAlertDialog(context: Context, dialogTitle: String, openDialog: MutableState<Boolean>) {
-        var strValue = remember { mutableStateOf("") }
-        val strId = context.resources.getIdentifier(dialogTitle, "string", context.packageName)
-        try {
-            if (strId != 0) strValue.value = context.getString(strId)
-        } catch (e: Resources.NotFoundException) {
-            // Handle missing resource
-        }
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
             title = { Text(text = dialogTitle) },
-            text = { Text(text = strValue.value, fontSize = 20.sp) },
+            text = { Text(text = "Приложение для управления танцорами", fontSize = 20.sp) },
             confirmButton = {
                 Button(onClick = { openDialog.value = false }) { Text(text = "OK") }
+            }
+        )
+    }
+
+    @Composable
+    fun EditDancerDialog(
+        context: Context,
+        dancer: Dancer,
+        onDismiss: () -> Unit,
+        onSave: (String, String, String, String) -> Unit
+    ) {
+        var name by remember { mutableStateOf(dancer.name) }
+        var surname by remember { mutableStateOf(dancer.surname) }
+        var group by remember { mutableStateOf(dancer.group) }
+        var role by remember { mutableStateOf(dancer.role) }
+
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Редактировать танцора", fontSize = 22.sp, fontWeight = FontWeight.Bold) },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    TextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Имя") },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(fontSize = 16.sp)
+                    )
+                    TextField(
+                        value = surname,
+                        onValueChange = { surname = it },
+                        label = { Text("Фамилия") },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(fontSize = 16.sp)
+                    )
+                    TextField(
+                        value = group,
+                        onValueChange = { group = it },
+                        label = { Text("Группа") },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(fontSize = 16.sp)
+                    )
+                    TextField(
+                        value = role,
+                        onValueChange = { role = it },
+                        label = { Text("Роль") },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(fontSize = 16.sp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (name.isNotEmpty() && surname.isNotEmpty() && group.isNotEmpty() && role.isNotEmpty()) {
+                            onSave(name, surname, group, role)
+                        } else {
+                            Toast.makeText(context, "Заполните все поля!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                ) {
+                    Text("Сохранить")
+                }
+            },
+            dismissButton = {
+                Button(onClick = onDismiss) {
+                    Text("Отмена")
+                }
             }
         )
     }
@@ -454,11 +508,7 @@ class AdminActivity : ComponentActivity() {
         val openDialog = remember { mutableStateOf(false) }
         var dancerSelected = remember { mutableStateOf("") }
 
-        var isEditing by remember { mutableStateOf(false) }
-        var editName by remember { mutableStateOf(model.name) }
-        var editSurname by remember { mutableStateOf(model.surname) }
-        var editGroup by remember { mutableStateOf(model.group) }
-        var editRole by remember { mutableStateOf(model.role) }
+        var showEditDialog by remember { mutableStateOf(false) }
 
         if (openDialog.value) MakeAlertDialog(context, dancerSelected.value, openDialog)
 
@@ -468,7 +518,6 @@ class AdminActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { res ->
             if (res.data?.data != null) {
-                println("image uri = ${res.data?.data}")
                 val imgURI = res.data?.data!!
 
                 context.contentResolver.takePersistableUriPermission(
@@ -477,6 +526,7 @@ class AdminActivity : ComponentActivity() {
                 val index = dancerListState.indexOf(model)
                 viewModel.changeImage(index, imgURI.toString())
                 dbHelper.changeImgForDancer(model.name, model.surname, imgURI.toString())
+                refreshDancersFromDb(dbHelper)
             }
         }
 
@@ -494,9 +544,7 @@ class AdminActivity : ComponentActivity() {
                     .fillMaxWidth()
                     .combinedClickable(
                         onClick = {
-                            println("item = ${model.name} ${model.surname}")
                             dancerSelected.value = "${model.name} ${model.surname}"
-                            Toast.makeText(context, "item = ${model.name} ${model.surname}", Toast.LENGTH_LONG).show()
                             openDialog.value = true
                         },
                         onLongClick = {
@@ -504,71 +552,35 @@ class AdminActivity : ComponentActivity() {
                         }
                     )
             ) {
-                if (isEditing) {
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        TextField(
-                            value = editName,
-                            onValueChange = { editName = it },
-                            label = { Text("Имя") },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(fontSize = 14.sp)
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "${model.name} ${model.surname}",
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(start = 18.dp),
+                            color = Color.Black
                         )
-                        TextField(
-                            value = editSurname,
-                            onValueChange = { editSurname = it },
-                            label = { Text("Фамилия") },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(fontSize = 14.sp)
-                        )
-                        TextField(
-                            value = editGroup,
-                            onValueChange = { editGroup = it },
-                            label = { Text("Группа") },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(fontSize = 14.sp)
-                        )
-                        TextField(
-                            value = editRole,
-                            onValueChange = { editRole = it },
-                            label = { Text("Роль") },
-                            modifier = Modifier.fillMaxWidth(),
-                            textStyle = TextStyle(fontSize = 14.sp)
+                        Text(
+                            text = "Группа: ${model.group}",
+                            fontSize = 16.sp,
+                            modifier = Modifier.padding(10.dp),
+                            fontStyle = FontStyle.Italic,
+                            color = Color.Black
                         )
                     }
-                } else {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "${model.name} ${model.surname}",
-                                fontSize = 19.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(start = 18.dp),
-                                color = Color.Black
-                            )
-                            Text(
-                                text = "Группа: ${model.group}",
-                                fontSize = 16.sp,
-                                modifier = Modifier.padding(10.dp),
-                                fontStyle = FontStyle.Italic,
-                                color = Color.Black
-                            )
-                        }
-                        Column {
-                            Text(
-                                text = "Роль: ${model.role}",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(10.dp),
-                                fontStyle = FontStyle.Italic,
-                                color = Color.Black
-                            )
-                        }
+                    Column {
+                        Text(
+                            text = "Роль: ${model.role}",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(10.dp),
+                            fontStyle = FontStyle.Italic,
+                            color = Color.Black
+                        )
                     }
                 }
 
@@ -581,68 +593,19 @@ class AdminActivity : ComponentActivity() {
                 )
             }
 
-            if (isEditing) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            val index = dancerListState.indexOf(model)
-                            viewModel.updateDancer(index, editName, editSurname, editGroup, editRole)
-                            val updatedDancer = dancerListState[index]
-                            dbHelper.updateDancer(updatedDancer)
-                            isEditing = false
-                            Toast.makeText(context, "Dancer updated!", Toast.LENGTH_SHORT).show()
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Save")
-                    }
-                    Button(
-                        onClick = {
-                            editName = model.name
-                            editSurname = model.surname
-                            editGroup = model.group
-                            editRole = model.role
-                            isEditing = false
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Cancel")
-                    }
-                }
-            }
-
             DropdownMenu(
                 expanded = mDisplayMenu,
                 onDismissRequest = { mDisplayMenu = false }
             ) {
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "Edit Dancer",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    },
+                    text = { Text("✏️ Редактировать", fontSize = 20.sp, fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         mDisplayMenu = !mDisplayMenu
-                        editName = model.name
-                        editSurname = model.surname
-                        editGroup = model.group
-                        editRole = model.role
-                        isEditing = true
+                        showEditDialog = true
                     }
                 )
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "Change Picture",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    },
+                    text = { Text("🖼️ Сменить фото", fontSize = 20.sp, fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         mDisplayMenu = !mDisplayMenu
                         val permission: String = Manifest.permission.READ_EXTERNAL_STORAGE
@@ -664,16 +627,29 @@ class AdminActivity : ComponentActivity() {
                     }
                 )
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "Delete Dancer",
-                            fontSize = 20.sp,
-                        )
-                    },
+                    text = { Text("🗑️ Удалить", fontSize = 20.sp) },
                     onClick = {
                         mDisplayMenu = !mDisplayMenu
                         viewModel.removeItem(model)
                         dbHelper.deleteDancer(model)
+                        refreshDancersFromDb(dbHelper)
+                    }
+                )
+            }
+
+            if (showEditDialog) {
+                EditDancerDialog(
+                    context = context,
+                    dancer = model,
+                    onDismiss = { showEditDialog = false },
+                    onSave = { name, surname, group, role ->
+                        val index = dancerListState.indexOf(model)
+                        viewModel.updateDancer(index, name, surname, group, role)
+                        val updatedDancer = dancerListState[index]
+                        dbHelper.updateDancer(updatedDancer)
+                        showEditDialog = false
+                        Toast.makeText(context, "Танцор обновлен!", Toast.LENGTH_SHORT).show()
+                        refreshDancersFromDb(dbHelper)
                     }
                 )
             }
@@ -744,7 +720,6 @@ class AdminActivity : ComponentActivity() {
             }
             Button(
                 onClick = {
-                    println("added $dancerName $dancerSurname $dancerGroup $dancerRole")
                     val newDancer = Dancer(
                         name = dancerName,
                         surname = dancerSurname,
